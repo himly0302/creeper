@@ -3,7 +3,7 @@
 > 一个简单实用的网页爬虫工具,将 Markdown 文件中的 URL 批量爬取并保存为结构化的本地 Markdown 文档。
 
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
-[![Version](https://img.shields.io/badge/version-1.2.0-green)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.3.0-green)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 ## ✨ 特性
@@ -19,6 +19,11 @@
 - 🎨 **友好界面**: 彩色日志、实时进度条、详细统计
 
 ## 📋 功能
+
+**V1.3 新增** 🔧
+- ✅ 统一 CLI 入口(合并同步/异步模式)
+- ✅ 通过 `--sync` 参数切换模式
+- ✅ 代码重构(消除 47.4% 重复代码)
 
 **V1.2 新增** 🌐
 - ✅ 交互式登录(Playwright 浏览器手动登录)
@@ -127,48 +132,54 @@ https://web.dev/learn/
 
 ### 2. 运行爬虫
 
-**方式1: 使用 V1.0 异步版本(推荐)** ⚡
+**基本使用(异步模式,默认推荐)** ⚡
 
 ```bash
 # 基本使用(默认并发数5)
-python creeper_async.py input.md
-
-# 自定义并发数(推荐 5-10)
-python creeper_async.py input.md -c 10
-
-# 指定输出目录
-python creeper_async.py input.md -o ./my-output
-
-# 开启调试模式
-python creeper_async.py input.md --debug
-
-# 强制重新爬取(跳过去重检查)
-python creeper_async.py input.md --force
-
-# 禁用 Playwright(仅静态爬取)
-python creeper_async.py input.md --no-playwright
-
-# 交互式登录(首次登录网站)
-python creeper_async.py --login-url https://zhuanlan.zhihu.com/p/28932301846
-
-# 使用已保存的 Cookie 爬取(自动从 Redis 加载)
-python creeper_async.py input.md
-```
-
-**方式2: 使用 MVP 同步版本(兼容)**
-
-```bash
-# 基本使用
 python creeper.py input.md
 
-# 其他参数与异步版本相同
-python creeper.py input.md -o ./output --debug
+# 自定义并发数(推荐 5-10)
+python creeper.py input.md -c 10
+
+# 指定输出目录
+python creeper.py input.md -o ./my-output
+
+# 开启调试模式
+python creeper.py input.md --debug
+
+# 强制重新爬取(跳过去重检查)
+python creeper.py input.md --force
+
+# 禁用 Playwright(仅静态爬取)
+python creeper.py input.md --no-playwright
+
+# 交互式登录(首次登录网站)
+python creeper.py --login-url https://example.com/login
+
+# 使用已保存的 Cookie 爬取(自动从 Redis 加载)
+python creeper.py input.md
+```
+
+**使用同步模式**
+
+```bash
+# 使用同步模式(顺序爬取)
+python creeper.py input.md --sync
+
+# 同步模式会自动忽略并发参数
+python creeper.py input.md --sync -c 10  # -c 10 被忽略
 ```
 
 **性能对比**:
-- 异步版本(V1.0): 3个URL约16秒 ⚡
-- 同步版本(MVP): 3个URL约28秒
+- 异步模式(推荐): 3个URL约16秒 ⚡
+- 同步模式: 3个URL约28秒
 - 性能提升: ~43%
+
+**迁移说明 (v1.3.0+)**:
+- ✅ `creeper_async.py` 已合并到 `creeper.py`
+- 旧命令: `python creeper_async.py input.md`
+- 新命令: `python creeper.py input.md` (功能完全相同)
+- 异步模式仍是默认模式,无需修改参数
 
 ### 3. 查看输出
 

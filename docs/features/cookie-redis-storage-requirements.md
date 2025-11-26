@@ -8,7 +8,7 @@
 
 ## 项目概况
 
-**技术栈**: Python 3.8+ + asyncio/aiohttp + Playwright 1.51+ + Redis 6.4+
+**技术栈**: Python 3.8+ + asyncio/aiohttp + Playwright 1.51+ + Redis 6.4+ (使用 DB 1)
 **架构模式**: 模块化分层架构 (parser/fetcher/storage/dedup/cookie)
 **代码风格**:
 - 中文注释和日志
@@ -234,8 +234,8 @@ https://example.com/login
 - [ ] 手动登录后关闭浏览器
 - [ ] 检查 Redis 中是否保存了 Cookie:
   ```bash
-  redis-cli KEYS "creeper:cookie:*"
-  redis-cli HGETALL "creeper:cookie:example.com"
+  redis-cli -n 1 KEYS "creeper:cookie:*"
+  redis-cli -n 1 HGETALL "creeper:cookie:example.com"
   ```
 - [ ] 测试使用已保存的 Cookie 爬取:
   ```bash
@@ -311,13 +311,13 @@ python creeper_async.py input.md
 
 ```bash
 # 查看所有 Cookie 域
-redis-cli KEYS "creeper:cookie:*"
+redis-cli -n 1 KEYS "creeper:cookie:*"
 
 # 查看特定域的 Cookie
-redis-cli HGETALL "creeper:cookie:example.com"
+redis-cli -n 1 HGETALL "creeper:cookie:example.com"
 
 # 清除所有 Cookie
-redis-cli DEL $(redis-cli KEYS "creeper:cookie:*")
+redis-cli -n 1 DEL $(redis-cli -n 1 KEYS "creeper:cookie:*")
 ```
 
 ### 配置项
