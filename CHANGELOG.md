@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.4.2] - 2025-11-26
+
+### Fixed
+- 🐛 **日志可读性**: 异步并发时日志添加 URL 上下文标识
+  - 使用 contextvars 实现异步上下文追踪
+  - 自定义 logging.Filter 自动提取 URL 信息
+  - 日志格式: `INFO [python] 开始爬取...`
+  - 大幅提升并发日志的可读性和调试效率
+  - 相关文件: `src/utils.py`, `src/async_fetcher.py`
+
 ## [1.4.1] - 2025-11-26
 
 ### Fixed

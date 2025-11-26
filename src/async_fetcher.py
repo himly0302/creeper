@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeout
 
 from .config import config
-from .utils import setup_logger, extract_domain, get_timestamp
+from .utils import setup_logger, extract_domain, get_timestamp, current_url
 from .fetcher import WebPage  # 复用 WebPage 数据类
 from .cookie_manager import CookieManager
 
@@ -79,6 +79,9 @@ class AsyncWebFetcher:
             WebPage 对象
         """
         async with self.semaphore:  # 控制并发数
+            # 设置当前URL到context (用于日志追踪)
+            current_url.set(url)
+
             logger.info(f"开始爬取: {url}")
 
             # 随机延迟

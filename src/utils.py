@@ -10,8 +10,45 @@ from pathlib import Path
 from datetime import datetime
 from slugify import slugify
 from typing import Optional
+from contextvars import ContextVar
 
 from .config import config
+
+# 创建 context 变量用于存储当前处理的 URL
+current_url: ContextVar[Optional[str]] = ContextVar('current_url', default=None)
+
+
+class URLContextFilter(logging.Filter):
+    """添加 URL 上下文信息到日志记录"""
+
+    def filter(self, record):
+        """为日志记录添加 url_short 属性"""
+        url = current_url.get()
+        if url:
+            # 提取域名作为简短标识
+            from urllib.parse import urlparse
+            parsed = urlparse(url)
+            domain = parsed.netloc or 'unknown'
+
+            # 简化域名显示
+            # 移除 www 前缀
+            if domain.startswith('www.'):
+                domain = domain[4:]
+
+            # 只保留主域名(去除子域名和 TLD)
+            domain_parts = domain.split('.')
+            if len(domain_parts) >= 2:
+                # 取倒数第二部分作为主域名
+                main_domain = domain_parts[-2]
+                # 处理特殊情况: git-scm.com -> git
+                if '-' in main_domain:
+                    main_domain = main_domain.split('-')[0]
+                domain = main_domain
+
+            record.url_short = f"[{domain}]"
+        else:
+            record.url_short = ""
+        return True
 
 
 def setup_logger(name: str = "creeper", log_file: Optional[str] = None) -> logging.Logger:
@@ -41,7 +78,7 @@ def setup_logger(name: str = "creeper", log_file: Optional[str] = None) -> loggi
 
     # 彩色日志格式
     console_formatter = colorlog.ColoredFormatter(
-        '%(log_color)s%(levelname)-8s%(reset)s %(blue)s%(message)s',
+        '%(log_color)s%(levelname)-8s%(reset)s %(cyan)s%(url_short)s%(reset)s %(blue)s%(message)s',
         datefmt='%Y-%m-%d %H:%M:%S',
         reset=True,
         log_colors={
@@ -53,6 +90,7 @@ def setup_logger(name: str = "creeper", log_file: Optional[str] = None) -> loggi
         }
     )
     console_handler.setFormatter(console_formatter)
+    console_handler.addFilter(URLContextFilter())  # 添加 URL 过滤器
     logger.addHandler(console_handler)
 
     # 文件处理器(普通格式)
@@ -61,10 +99,11 @@ def setup_logger(name: str = "creeper", log_file: Optional[str] = None) -> loggi
     file_handler.setLevel(logging.DEBUG)  # 文件记录所有级别
 
     file_formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        '%(asctime)s - %(name)s - %(levelname)s - %(url_short)s%(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
     file_handler.setFormatter(file_formatter)
+    file_handler.addFilter(URLContextFilter())  # 添加 URL 过滤器
     logger.addHandler(file_handler)
 
     return logger
