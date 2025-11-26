@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-11-26
+
+### Added
+- 🍪 **Cookie 管理功能**: 支持 Cookie 的存储、加载和复用
+- 🔐 **登录态保持**: 可爬取需要登录的网站内容
+- 💾 **Cookie 持久化**: 支持 JSON 格式存储 Cookie
+- 🔄 **自动 Cookie 提取**: 从请求响应中自动提取并保存 Cookie
+- 📝 **Cookie 统计**: 提供 Cookie 管理的详细统计信息
+
+### Changed
+- 🔧 `WebFetcher` 和 `AsyncWebFetcher` 现在支持 `cookie_manager` 参数
+- 📋 新增 CLI 参数: `--cookies-file` 和 `--save-cookies`
+
+### Technical
+- 新增 `src/cookie_manager.py` Cookie 管理模块
+- 支持与 requests 和 Playwright 的 Cookie 互转
+- Cookie 按域名分组存储
+- 支持 Cookie 的精确匹配和父域匹配
+
+---
+
 ## [1.0.0] - 2025-11-26
 
 ### Added

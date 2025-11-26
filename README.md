@@ -3,7 +3,7 @@
 > 一个简单实用的网页爬虫工具,将 Markdown 文件中的 URL 批量爬取并保存为结构化的本地 Markdown 文档。
 
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
-[![Version](https://img.shields.io/badge/version-1.0.0-green)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.1.0-green)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 ## ✨ 特性
@@ -12,11 +12,17 @@
 - 🧠 **智能提取**: 使用 Trafilatura 精准提取文章核心内容,过滤广告
 - 🎭 **动态渲染**: 自动降级到 Playwright 处理 JavaScript 渲染页面
 - 🔄 **自动去重**: Redis 存储已爬取 URL,避免重复工作
+- 🍪 **Cookie 管理**: 支持 Cookie 存储和复用,可爬取需要登录的网站
 - 📁 **结构化存储**: 按层级目录组织,生成标准 Markdown 文档
 - 🛡️ **反爬虫策略**: 随机 User-Agent、请求间隔、指数退避重试
 - 🎨 **友好界面**: 彩色日志、实时进度条、详细统计
 
 ## 📋 功能
+
+**V1.1 新增** 🍪
+- ✅ Cookie 管理与持久化
+- ✅ 支持需要登录的网站爬取
+- ✅ 自动提取和保存 Cookie
 
 **V1.0 新增** ⚡
 - ✅ 异步并发处理(asyncio + aiohttp)
@@ -227,6 +233,8 @@ python creeper.py [输入文件] [选项]
   --force                 强制重新爬取(跳过去重)
   --debug                 开启调试模式
   --no-playwright         禁用 Playwright(仅静态爬取)
+  --cookies-file PATH     Cookie 存储文件路径(启用 Cookie 管理)
+  --save-cookies          爬取结束后保存 Cookie
   -h, --help              显示帮助信息
 ```
 
@@ -258,6 +266,22 @@ https://css-tricks.com/
 
 # 运行(开启调试)
 python creeper.py blogs.md --debug
+```
+
+### 示例 3: 使用 Cookie 爬取需要登录的网站
+
+```bash
+# 第一次爬取,使用已有的 Cookie 文件
+python creeper_async.py private.md --cookies-file ./cookies.json
+
+# 爬取并保存 Cookie(用于下次复用)
+python creeper_async.py private.md --cookies-file ./cookies.json --save-cookies
+
+# 说明:
+# 1. 首次使用需要手动创建 cookies.json 文件(可以从浏览器导出)
+# 2. 程序会自动使用该 Cookie 访问网站
+# 3. 使用 --save-cookies 会在爬取结束后保存新的 Cookie
+# 4. Cookie 文件格式为 JSON,按域名分组存储
 ```
 
 ## 🐛 常见问题
@@ -335,13 +359,60 @@ rm -rf output/*
 rm -f creeper.log
 ```
 
+### Q7: 如何使用 Cookie 功能?
+
+**场景**: 需要爬取需要登录的网站
+
+**步骤**:
+
+1. **手动获取 Cookie**(首次使用):
+   - 在浏览器中登录目标网站
+   - 打开开发者工具(F12) → Application → Cookies
+   - 复制需要的 Cookie 信息
+
+2. **创建 Cookie 文件** (cookies.json):
+   ```json
+   {
+     "cookies": {
+       "example.com": [
+         {
+           "name": "session_id",
+           "value": "your_session_id_here",
+           "domain": "example.com",
+           "path": "/"
+         }
+       ]
+     },
+     "metadata": {
+       "created_at": "2025-11-26T10:00:00",
+       "format": "json",
+       "version": "1.0"
+     }
+   }
+   ```
+
+3. **使用 Cookie 爬取**:
+   ```bash
+   python creeper_async.py input.md --cookies-file ./cookies.json --save-cookies
+   ```
+
+4. **自动保存更新的 Cookie**:
+   - 使用 `--save-cookies` 参数会自动保存爬取过程中更新的 Cookie
+   - 下次爬取时可以继续使用
+
+**注意事项**:
+- Cookie 文件包含敏感信息,请勿分享或上传到公开仓库
+- 定期更新 Cookie 以保持登录态
+- 建议将 cookies.json 添加到 .gitignore
+
 ## 📝 开发计划
 
 查看 [docs/requirements.md](docs/requirements.md) 了解完整需求和开发计划。
 
-- ✅ **MVP (当前)**: 核心爬取功能
-- 🔄 **V1.0 (计划)**: Cookie 管理、性能优化
-- 📅 **V1.1 (未来)**: 代理池、图片下载、PDF 导出
+- ✅ **MVP**: 核心爬取功能
+- ✅ **V1.0**: 异步并发、性能优化
+- ✅ **V1.1**: Cookie 管理
+- 📅 **V1.2 (未来)**: 代理池、图片下载、PDF 导出
 
 ## 🤝 贡献
 

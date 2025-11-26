@@ -17,6 +17,7 @@ from playwright.async_api import async_playwright, TimeoutError as PlaywrightTim
 from .config import config
 from .utils import setup_logger, extract_domain, get_timestamp
 from .fetcher import WebPage  # 复用 WebPage 数据类
+from .cookie_manager import CookieManager
 
 logger = setup_logger(__name__)
 
@@ -24,19 +25,24 @@ logger = setup_logger(__name__)
 class AsyncWebFetcher:
     """异步网页爬取器"""
 
-    def __init__(self, use_playwright: bool = True, concurrency: int = None):
+    def __init__(self, use_playwright: bool = True, concurrency: int = None, cookie_manager: Optional[CookieManager] = None):
         """
         初始化异步爬取器
 
         Args:
             use_playwright: 是否启用 Playwright 动态渲染
             concurrency: 并发数,默认使用配置中的值
+            cookie_manager: Cookie 管理器(可选)
         """
         self.use_playwright = use_playwright
         self.concurrency = concurrency or config.CONCURRENCY
+        self.cookie_manager = cookie_manager
         self.semaphore = asyncio.Semaphore(self.concurrency)
 
-        logger.info(f"异步网页爬取器已初始化 (并发数: {self.concurrency}, Playwright: {use_playwright})")
+        if cookie_manager:
+            logger.info(f"异步网页爬取器已初始化 (并发数: {self.concurrency}, Playwright: {use_playwright}, Cookie: 已启用)")
+        else:
+            logger.info(f"异步网页爬取器已初始化 (并发数: {self.concurrency}, Playwright: {use_playwright})")
 
     def _get_random_user_agent(self) -> str:
         """获取随机 User-Agent"""
@@ -122,12 +128,36 @@ class AsyncWebFetcher:
             'Connection': 'keep-alive',
         }
 
+        # 准备 cookies(如果有)
+        cookies = None
+        if self.cookie_manager:
+            cookies_list = self.cookie_manager.get_cookies_for_url(url)
+            if cookies_list:
+                cookies = {cookie['name']: cookie['value'] for cookie in cookies_list}
+                logger.debug(f"使用 {len(cookies)} 个 Cookie")
+
         timeout = aiohttp.ClientTimeout(total=config.REQUEST_TIMEOUT)
 
-        async with aiohttp.ClientSession(timeout=timeout) as session:
+        async with aiohttp.ClientSession(timeout=timeout, cookies=cookies) as session:
             async with session.get(url, headers=headers, allow_redirects=True) as response:
                 response.raise_for_status()
                 html = await response.text()
+
+                # 保存响应的 cookies(如果有 cookie_manager)
+                if self.cookie_manager and response.cookies:
+                    domain = extract_domain(url)
+                    # 将 aiohttp cookies 转换为标准格式
+                    cookies_to_save = []
+                    for key, cookie in response.cookies.items():
+                        cookies_to_save.append({
+                            'name': key,
+                            'value': cookie.value,
+                            'domain': domain,
+                            'path': '/',
+                        })
+                    if cookies_to_save:
+                        self.cookie_manager.set_cookies(domain, cookies_to_save)
+                        logger.debug(f"保存了来自 {domain} 的 Cookie")
 
         # 使用 Trafilatura 提取内容(CPU密集型,在线程池中运行)
         loop = asyncio.get_event_loop()
@@ -182,6 +212,14 @@ class AsyncWebFetcher:
                 user_agent=self._get_random_user_agent(),
                 viewport={'width': 1920, 'height': 1080}
             )
+
+            # 添加 cookies(如果有)
+            if self.cookie_manager:
+                cookies = self.cookie_manager.to_playwright_format()
+                if cookies:
+                    await context.add_cookies(cookies)
+                    logger.debug(f"已添加 {len(cookies)} 个 Cookie 到 Playwright")
+
             page = await context.new_page()
 
             try:
@@ -190,6 +228,22 @@ class AsyncWebFetcher:
 
                 # 等待页面加载
                 await asyncio.sleep(2)
+
+                # 保存 cookies(如果有 cookie_manager)
+                if self.cookie_manager:
+                    cookies = await context.cookies()
+                    # 按域分组
+                    domain_cookies = {}
+                    for cookie in cookies:
+                        domain = cookie.get('domain', '')
+                        if domain not in domain_cookies:
+                            domain_cookies[domain] = []
+                        domain_cookies[domain].append(cookie)
+
+                    # 存储到 cookie manager
+                    for domain, cookies in domain_cookies.items():
+                        self.cookie_manager.set_cookies(domain, cookies)
+                    logger.debug("已保存 Playwright 的 Cookie")
 
                 # 获取 HTML
                 html = await page.content()

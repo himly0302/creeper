@@ -13,6 +13,7 @@ from tqdm.asyncio import tqdm as async_tqdm
 from src.parser import MarkdownParser
 from src.dedup import DedupManager
 from src.async_fetcher import AsyncWebFetcher
+from src.cookie_manager import CookieManager
 from src.storage import StorageManager
 from src.config import config
 from src.utils import setup_logger
@@ -39,12 +40,22 @@ class AsyncCreeper:
         }
         self.failed_items = []
 
+        # 初始化 Cookie 管理器(如果指定)
+        self.cookie_manager = None
+        if args.cookies_file:
+            self.cookie_manager = CookieManager(
+                cookies_file=args.cookies_file,
+                format='json'
+            )
+            logger.info(f"已启用 Cookie 管理,文件: {args.cookies_file}")
+
         # 初始化各个模块
         self.parser = None
         self.dedup = DedupManager()
         self.fetcher = AsyncWebFetcher(
             use_playwright=not args.no_playwright,
-            concurrency=args.concurrency
+            concurrency=args.concurrency,
+            cookie_manager=self.cookie_manager
         )
         self.storage = StorageManager(args.output)
 
@@ -106,6 +117,11 @@ class AsyncCreeper:
             logger.error(f"程序异常: {e}", exc_info=config.DEBUG)
             sys.exit(1)
         finally:
+            # 保存 Cookie(如果有)
+            if self.cookie_manager and self.args.save_cookies:
+                if self.cookie_manager.save():
+                    logger.info(f"Cookie 已保存")
+
             # 清理资源
             self.dedup.close()
 
@@ -228,6 +244,19 @@ def parse_args():
         '--no-playwright',
         action='store_true',
         help='禁用 Playwright(仅使用静态爬取)'
+    )
+
+    parser.add_argument(
+        '--cookies-file',
+        type=str,
+        default=None,
+        help='Cookie 存储文件路径(启用 Cookie 管理)'
+    )
+
+    parser.add_argument(
+        '--save-cookies',
+        action='store_true',
+        help='爬取结束后保存 Cookie'
     )
 
     parser.add_argument(

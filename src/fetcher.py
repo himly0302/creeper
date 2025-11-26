@@ -15,6 +15,7 @@ from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeo
 
 from .config import config
 from .utils import setup_logger, extract_domain, get_timestamp
+from .cookie_manager import CookieManager
 
 logger = setup_logger(__name__)
 
@@ -41,18 +42,23 @@ class WebPage:
 class WebFetcher:
     """网页爬取器"""
 
-    def __init__(self, use_playwright: bool = True):
+    def __init__(self, use_playwright: bool = True, cookie_manager: Optional[CookieManager] = None):
         """
         初始化爬取器
 
         Args:
             use_playwright: 是否启用 Playwright 动态渲染
+            cookie_manager: Cookie 管理器(可选)
         """
         self.use_playwright = use_playwright
+        self.cookie_manager = cookie_manager
         self.session = requests.Session()
         self._setup_session()
 
-        logger.info(f"网页爬取器已初始化 (Playwright: {use_playwright})")
+        if cookie_manager:
+            logger.info(f"网页爬取器已初始化 (Playwright: {use_playwright}, Cookie: 已启用)")
+        else:
+            logger.info(f"网页爬取器已初始化 (Playwright: {use_playwright})")
 
     def _setup_session(self):
         """配置 requests session"""
@@ -135,14 +141,29 @@ class WebFetcher:
         # 设置随机 User-Agent
         headers = {'User-Agent': self._get_random_user_agent()}
 
+        # 准备 cookies(如果有)
+        cookies = None
+        if self.cookie_manager:
+            cookies_list = self.cookie_manager.get_cookies_for_url(url)
+            if cookies_list:
+                cookies = {cookie['name']: cookie['value'] for cookie in cookies_list}
+                logger.debug(f"使用 {len(cookies)} 个 Cookie")
+
         # 下载网页
         response = self.session.get(
             url,
             headers=headers,
+            cookies=cookies,
             timeout=config.REQUEST_TIMEOUT,
             allow_redirects=True
         )
         response.raise_for_status()
+
+        # 保存响应的 cookies(如果有 cookie_manager)
+        if self.cookie_manager and response.cookies:
+            domain = extract_domain(url)
+            self.cookie_manager.add_cookies_from_requests(domain, response.cookies)
+            logger.debug(f"保存了来自 {domain} 的 Cookie")
 
         html = response.text
 
@@ -195,6 +216,14 @@ class WebFetcher:
                 user_agent=self._get_random_user_agent(),
                 viewport={'width': 1920, 'height': 1080}
             )
+
+            # 添加 cookies(如果有)
+            if self.cookie_manager:
+                cookies = self.cookie_manager.to_playwright_format()
+                if cookies:
+                    context.add_cookies(cookies)
+                    logger.debug(f"已添加 {len(cookies)} 个 Cookie 到 Playwright")
+
             page = context.new_page()
 
             try:
@@ -203,6 +232,11 @@ class WebFetcher:
 
                 # 等待页面加载
                 time.sleep(2)
+
+                # 保存 cookies(如果有 cookie_manager)
+                if self.cookie_manager:
+                    self.cookie_manager.add_cookies_from_playwright(context)
+                    logger.debug("已保存 Playwright 的 Cookie")
 
                 # 获取 HTML
                 html = page.content()
