@@ -53,6 +53,12 @@ class Config:
     MAX_FILENAME_LENGTH = int(os.getenv('MAX_FILENAME_LENGTH', 100))
     SAVE_FAILED_URLS = os.getenv('SAVE_FAILED_URLS', 'true').lower() == 'true'
 
+    # Cookie 配置
+    COOKIE_STORAGE = os.getenv('COOKIE_STORAGE', 'redis')  # 'file' 或 'redis'
+    COOKIE_EXPIRE_DAYS = int(os.getenv('COOKIE_EXPIRE_DAYS', 7))  # Cookie 过期天数
+    COOKIE_REDIS_KEY_PREFIX = os.getenv('COOKIE_REDIS_KEY_PREFIX', 'creeper:cookie:')
+    INTERACTIVE_LOGIN_TIMEOUT = int(os.getenv('INTERACTIVE_LOGIN_TIMEOUT', 300))  # 交互式登录超时(秒)
+
     # 调试配置
     DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')

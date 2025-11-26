@@ -1,6 +1,7 @@
 """
 Cookie 管理模块
 负责 Cookie 的存储、加载和管理
+支持文件存储和 Redis 存储
 """
 
 import json
@@ -8,6 +9,7 @@ import pickle
 from pathlib import Path
 from typing import Optional, Dict, List
 from datetime import datetime
+import redis
 
 from src.utils import setup_logger
 
@@ -17,24 +19,66 @@ logger = setup_logger("creeper.cookie")
 class CookieManager:
     """Cookie 管理器"""
 
-    def __init__(self, cookies_file: Optional[str] = None, format: str = 'json'):
+    def __init__(
+        self,
+        cookies_file: Optional[str] = None,
+        format: str = 'json',
+        storage_backend: str = 'file',
+        redis_client: Optional[redis.Redis] = None,
+        redis_key_prefix: str = 'creeper:cookie:',
+        expire_days: int = 7
+    ):
         """
         初始化 Cookie 管理器
 
         Args:
-            cookies_file: Cookie 存储文件路径
+            cookies_file: Cookie 存储文件路径 (file 模式使用)
             format: 存储格式 ('json' 或 'pickle')
+            storage_backend: 存储后端 ('file' 或 'redis')
+            redis_client: Redis 客户端实例 (redis 模式使用)
+            redis_key_prefix: Redis Key 前缀
+            expire_days: Cookie 过期天数 (redis 模式使用)
         """
         self.cookies_file = Path(cookies_file) if cookies_file else None
         self.format = format
+        self.storage_backend = storage_backend
+        self.redis_client = redis_client
+        self.redis_key_prefix = redis_key_prefix
+        self.expire_days = expire_days
         self.cookies: Dict[str, List[dict]] = {}  # domain -> cookies
 
-        # 如果指定了文件且文件存在,自动加载
-        if self.cookies_file and self.cookies_file.exists():
-            self.load()
-            logger.info(f"已加载 Cookie 文件: {self.cookies_file}")
+        # 根据存储后端初始化
+        if self.storage_backend == 'redis':
+            if not self.redis_client:
+                logger.warning("Redis 存储模式但未提供 redis_client,将无法使用 Redis 存储")
+            else:
+                # 从 Redis 加载所有 Cookie
+                self._load_all_from_redis()
+                logger.info(f"已从 Redis 加载 Cookie,共 {len(self.cookies)} 个域")
+        elif self.storage_backend == 'file':
+            # 如果指定了文件且文件存在,自动加载
+            if self.cookies_file and self.cookies_file.exists():
+                self.load()
+                logger.info(f"已加载 Cookie 文件: {self.cookies_file}")
+        else:
+            logger.warning(f"未知的存储后端: {self.storage_backend},使用文件存储")
 
     def save(self, cookies_file: Optional[str] = None) -> bool:
+        """
+        保存 Cookies
+
+        Args:
+            cookies_file: Cookie 存储文件路径(可选,file 模式使用)
+
+        Returns:
+            bool: 是否保存成功
+        """
+        if self.storage_backend == 'redis':
+            return self._save_all_to_redis()
+        else:
+            return self._save_to_file(cookies_file)
+
+    def _save_to_file(self, cookies_file: Optional[str] = None) -> bool:
         """
         保存 Cookies 到文件
 
@@ -75,12 +119,73 @@ class CookieManager:
                 return False
 
             self.cookies_file = file_path
-            logger.info(f"Cookie 已保存到: {file_path}")
+            logger.info(f"Cookie 已保存到文件: {file_path}")
             logger.debug(f"保存了 {len(self.cookies)} 个域的 Cookie")
             return True
 
         except Exception as e:
-            logger.error(f"保存 Cookie 失败: {e}")
+            logger.error(f"保存 Cookie 到文件失败: {e}")
+            return False
+
+    def _save_all_to_redis(self) -> bool:
+        """
+        保存所有 Cookies 到 Redis
+
+        Returns:
+            bool: 是否保存成功
+        """
+        if not self.redis_client:
+            logger.error("Redis 客户端未初始化")
+            return False
+
+        try:
+            success_count = 0
+            for domain, cookies in self.cookies.items():
+                if self._save_to_redis(domain, cookies):
+                    success_count += 1
+
+            logger.info(f"Cookie 已保存到 Redis,共 {success_count}/{len(self.cookies)} 个域")
+            return success_count > 0
+
+        except Exception as e:
+            logger.error(f"保存 Cookie 到 Redis 失败: {e}")
+            return False
+
+    def _save_to_redis(self, domain: str, cookies: List[dict]) -> bool:
+        """
+        保存单个域的 Cookies 到 Redis
+
+        Args:
+            domain: 域名
+            cookies: Cookie 列表
+
+        Returns:
+            bool: 是否保存成功
+        """
+        if not self.redis_client:
+            return False
+
+        try:
+            key = f"{self.redis_key_prefix}{domain}"
+
+            # 删除旧数据
+            self.redis_client.delete(key)
+
+            # 使用 Hash 存储每个 Cookie
+            for i, cookie in enumerate(cookies):
+                field = f"cookie_{i}"
+                value = json.dumps(cookie, ensure_ascii=False)
+                self.redis_client.hset(key, field, value)
+
+            # 设置过期时间
+            expire_seconds = self.expire_days * 24 * 60 * 60
+            self.redis_client.expire(key, expire_seconds)
+
+            logger.debug(f"已保存 {domain} 的 {len(cookies)} 个 Cookie 到 Redis (过期时间: {self.expire_days} 天)")
+            return True
+
+        except Exception as e:
+            logger.error(f"保存 {domain} 的 Cookie 到 Redis 失败: {e}")
             return False
 
     def load(self, cookies_file: Optional[str] = None) -> bool:
@@ -296,9 +401,110 @@ class CookieManager:
             dict: 统计信息
         """
         total_cookies = sum(len(cookies) for cookies in self.cookies.values())
-        return {
+        stats = {
             'total_domains': len(self.cookies),
             'total_cookies': total_cookies,
             'domains': list(self.cookies.keys()),
-            'cookies_file': str(self.cookies_file) if self.cookies_file else None,
+            'storage_backend': self.storage_backend,
         }
+
+        if self.storage_backend == 'file':
+            stats['cookies_file'] = str(self.cookies_file) if self.cookies_file else None
+        elif self.storage_backend == 'redis':
+            stats['redis_key_prefix'] = self.redis_key_prefix
+            stats['expire_days'] = self.expire_days
+
+        return stats
+
+    def _load_all_from_redis(self) -> bool:
+        """
+        从 Redis 加载所有 Cookies
+
+        Returns:
+            bool: 是否加载成功
+        """
+        if not self.redis_client:
+            return False
+
+        try:
+            # 扫描所有 Cookie keys
+            pattern = f"{self.redis_key_prefix}*"
+            keys = self.redis_client.keys(pattern)
+
+            if not keys:
+                logger.debug("Redis 中没有找到 Cookie")
+                return True
+
+            # 加载每个域的 Cookie
+            for key in keys:
+                # 从 key 中提取域名
+                domain = key.replace(self.redis_key_prefix, '')
+                cookies = self._load_from_redis(domain)
+                if cookies:
+                    self.cookies[domain] = cookies
+
+            logger.debug(f"从 Redis 加载了 {len(self.cookies)} 个域的 Cookie")
+            return True
+
+        except Exception as e:
+            logger.error(f"从 Redis 加载 Cookie 失败: {e}")
+            return False
+
+    def _load_from_redis(self, domain: str) -> List[dict]:
+        """
+        从 Redis 加载单个域的 Cookies
+
+        Args:
+            domain: 域名
+
+        Returns:
+            List[dict]: Cookie 列表
+        """
+        if not self.redis_client:
+            return []
+
+        try:
+            key = f"{self.redis_key_prefix}{domain}"
+
+            # 检查 key 是否存在
+            if not self.redis_client.exists(key):
+                return []
+
+            # 读取所有 Cookie
+            cookie_data = self.redis_client.hgetall(key)
+            cookies = []
+
+            for field, value in cookie_data.items():
+                try:
+                    cookie = json.loads(value)
+                    cookies.append(cookie)
+                except json.JSONDecodeError as e:
+                    logger.warning(f"解析 Cookie 失败: {e}")
+                    continue
+
+            logger.debug(f"从 Redis 加载了 {domain} 的 {len(cookies)} 个 Cookie")
+            return cookies
+
+        except Exception as e:
+            logger.error(f"从 Redis 加载 {domain} 的 Cookie 失败: {e}")
+            return []
+
+    def get_all_domains_from_redis(self) -> List[str]:
+        """
+        获取 Redis 中所有已存储的域名
+
+        Returns:
+            List[str]: 域名列表
+        """
+        if not self.redis_client:
+            return []
+
+        try:
+            pattern = f"{self.redis_key_prefix}*"
+            keys = self.redis_client.keys(pattern)
+            domains = [key.replace(self.redis_key_prefix, '') for key in keys]
+            return domains
+
+        except Exception as e:
+            logger.error(f"获取 Redis 域名列表失败: {e}")
+            return []

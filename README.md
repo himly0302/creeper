@@ -3,7 +3,7 @@
 > 一个简单实用的网页爬虫工具,将 Markdown 文件中的 URL 批量爬取并保存为结构化的本地 Markdown 文档。
 
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
-[![Version](https://img.shields.io/badge/version-1.1.0-green)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.2.0-green)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 ## ✨ 特性
@@ -12,12 +12,18 @@
 - 🧠 **智能提取**: 使用 Trafilatura 精准提取文章核心内容,过滤广告
 - 🎭 **动态渲染**: 自动降级到 Playwright 处理 JavaScript 渲染页面
 - 🔄 **自动去重**: Redis 存储已爬取 URL,避免重复工作
-- 🍪 **Cookie 管理**: 支持 Cookie 存储和复用,可爬取需要登录的网站
+- 🌐 **交互式登录**: 一键打开浏览器手动登录,自动提取 Cookie 到 Redis
+- 🍪 **智能 Cookie**: Redis 跨会话存储,登录一次后续自动使用
 - 📁 **结构化存储**: 按层级目录组织,生成标准 Markdown 文档
 - 🛡️ **反爬虫策略**: 随机 User-Agent、请求间隔、指数退避重试
 - 🎨 **友好界面**: 彩色日志、实时进度条、详细统计
 
 ## 📋 功能
+
+**V1.2 新增** 🌐
+- ✅ 交互式登录(Playwright 浏览器手动登录)
+- ✅ Cookie Redis 存储(跨会话复用)
+- ✅ 自动 Cookie 管理(登录一次,后续自动使用)
 
 **V1.1 新增** 🍪
 - ✅ Cookie 管理与持久化
@@ -141,6 +147,12 @@ python creeper_async.py input.md --force
 
 # 禁用 Playwright(仅静态爬取)
 python creeper_async.py input.md --no-playwright
+
+# 交互式登录(首次登录网站)
+python creeper_async.py --login-url https://zhuanlan.zhihu.com/p/28932301846
+
+# 使用已保存的 Cookie 爬取(自动从 Redis 加载)
+python creeper_async.py input.md
 ```
 
 **方式2: 使用 MVP 同步版本(兼容)**
@@ -222,10 +234,10 @@ LOG_LEVEL=INFO
 ## 🔧 命令行参数
 
 ```bash
-python creeper.py [输入文件] [选项]
+python creeper_async.py [输入文件] [选项]
 
 必需参数:
-  input_file              Markdown 输入文件路径
+  input_file              Markdown 输入文件路径(使用 --login-url 时可选)
 
 可选参数:
   -o, --output DIR        输出目录(默认: ./output)
@@ -233,8 +245,10 @@ python creeper.py [输入文件] [选项]
   --force                 强制重新爬取(跳过去重)
   --debug                 开启调试模式
   --no-playwright         禁用 Playwright(仅静态爬取)
-  --cookies-file PATH     Cookie 存储文件路径(启用 Cookie 管理)
-  --save-cookies          爬取结束后保存 Cookie
+  --login-url URL         交互式登录 URL,打开浏览器让用户手动登录
+  --cookies-file PATH     Cookie 存储文件路径(文件模式,向后兼容)
+  --save-cookies          爬取结束后保存 Cookie(仅文件模式)
+  -v, --version           显示版本信息
   -h, --help              显示帮助信息
 ```
 
@@ -268,7 +282,31 @@ https://css-tricks.com/
 python creeper.py blogs.md --debug
 ```
 
-### 示例 3: 使用 Cookie 爬取需要登录的网站
+### 示例 3: 交互式登录并爬取需要登录的网站 (V1.2 新特性)
+
+**推荐方式 - 使用 Redis 存储(自动管理)**:
+
+```bash
+# 步骤 1: 首次使用,进行交互式登录
+python creeper_async.py --login-url https://example.com/login
+
+# 操作说明:
+# 1. 程序会自动打开浏览器窗口
+# 2. 在浏览器中手动完成登录操作
+# 3. 登录成功后,关闭浏览器窗口
+# 4. Cookie 会自动保存到 Redis(默认过期时间: 7天)
+
+# 步骤 2: 后续爬取,自动使用已保存的 Cookie
+python creeper_async.py private.md -c 5
+
+# 说明:
+# - 程序会自动从 Redis 加载 Cookie
+# - 无需再次登录
+# - Cookie 会在 Redis 中保持 7 天(可在 .env 中配置)
+# - 支持跨会话复用
+```
+
+**传统方式 - 使用文件存储(向后兼容)**:
 
 ```bash
 # 第一次爬取,使用已有的 Cookie 文件
@@ -359,9 +397,60 @@ rm -rf output/*
 rm -f creeper.log
 ```
 
-### Q7: 如何使用 Cookie 功能?
+### Q7: 如何使用交互式登录功能? (V1.2 新特性)
 
-**场景**: 需要爬取需要登录的网站
+**场景**: 需要爬取需要登录的网站,使用 Redis 自动管理 Cookie
+
+**步骤**:
+
+1. **配置 Redis Cookie 存储**(推荐):
+   - 编辑 `.env` 文件,确保 `COOKIE_STORAGE=redis`(默认已启用)
+   - 配置 Cookie 过期时间: `COOKIE_EXPIRE_DAYS=7`(默认7天)
+
+2. **首次交互式登录**:
+   ```bash
+   python creeper_async.py --login-url https://example.com/login
+   ```
+   - 程序会自动打开浏览器(最大化窗口)
+   - 在浏览器中手动完成登录操作
+   - 登录成功后,直接关闭浏览器窗口
+   - Cookie 会自动提取并保存到 Redis
+
+3. **后续爬取自动使用 Cookie**:
+   ```bash
+   python creeper_async.py input.md
+   ```
+   - 程序会自动从 Redis 加载之前保存的 Cookie
+   - 无需再次登录,直接开始爬取
+
+4. **查看 Redis 中保存的 Cookie**:
+   ```bash
+   # 查看所有 Cookie Key
+   redis-cli -n 1 KEYS "creeper:cookie:*"
+
+   # 查看特定域名的 Cookie
+   redis-cli -n 1 HGETALL "creeper:cookie:example.com"
+
+   # 删除特定域名的 Cookie
+   redis-cli -n 1 DEL "creeper:cookie:example.com"
+   ```
+
+**优势**:
+- ✅ 无需手动从浏览器导出 Cookie
+- ✅ 自动跨会话复用,不用每次登录
+- ✅ 支持多域名 Cookie 自动分组
+- ✅ 自动过期管理(默认7天)
+- ✅ 交互式登录超时保护(默认5分钟)
+
+**注意事项**:
+- 交互式登录需要 Playwright 浏览器支持
+- 确保 Redis 服务正常运行
+- Cookie 包含敏感信息,请妥善保管 Redis 数据
+- 如需重新登录,可删除 Redis 中对应域名的 Cookie
+
+### Q8: 如何使用 Cookie 文件模式(传统方式)?
+
+**场景**: 不想使用 Redis,使用文件存储 Cookie(向后兼容)
 
 **步骤**:
 
@@ -396,10 +485,6 @@ rm -f creeper.log
    python creeper_async.py input.md --cookies-file ./cookies.json --save-cookies
    ```
 
-4. **自动保存更新的 Cookie**:
-   - 使用 `--save-cookies` 参数会自动保存爬取过程中更新的 Cookie
-   - 下次爬取时可以继续使用
-
 **注意事项**:
 - Cookie 文件包含敏感信息,请勿分享或上传到公开仓库
 - 定期更新 Cookie 以保持登录态
@@ -412,7 +497,8 @@ rm -f creeper.log
 - ✅ **MVP**: 核心爬取功能
 - ✅ **V1.0**: 异步并发、性能优化
 - ✅ **V1.1**: Cookie 管理
-- 📅 **V1.2 (未来)**: 代理池、图片下载、PDF 导出
+- ✅ **V1.2**: 交互式登录、Redis Cookie 存储
+- 📅 **V1.3 (未来)**: 代理池、图片下载、PDF 导出
 
 ## 🤝 贡献
 

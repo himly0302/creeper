@@ -6,6 +6,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.2.0] - 2025-11-26
+
+### Added
+- 🌐 **交互式登录功能**: 使用 Playwright 打开浏览器让用户手动登录
+  - 支持 `--login-url` 参数启动交互式登录
+  - 登录完成后自动提取并保存 Cookie
+  - 相关文件: `src/interactive_login.py`
+- 💾 **Cookie Redis 存储**: Cookie 存储到 Redis 替代文件存储
+  - 使用 Redis Hash 结构存储,按域名分组
+  - 支持设置过期时间(默认 7 天)
+  - 跨会话复用 Cookie
+  - 相关文件: `src/cookie_manager.py`
+- 🔄 **自动 Cookie 管理**: 登录一次,后续爬取自动使用
+
+### Changed
+- 🔧 `CookieManager` 支持可选的存储后端 ('file' 或 'redis')
+- 📋 新增 CLI 参数: `--login-url <URL>`
+- ⚙️ 新增配置项: `COOKIE_STORAGE`, `COOKIE_EXPIRE_DAYS`, `COOKIE_REDIS_KEY_PREFIX`, `INTERACTIVE_LOGIN_TIMEOUT`
+- 🔀 `input_file` 参数变为可选(使用 `--login-url` 时不需要)
+
+### Technical
+- Cookie 在 Redis 中使用 `creeper:cookie:{domain}` 作为 Key
+- 使用 HSET/HGETALL 操作 Cookie 数据
+- Playwright 以非 headless 模式打开,等待用户操作
+- 支持超时控制(默认 5 分钟)
+- Cookie 自动从 Redis 加载,无需手动指定文件
+
+### Migration Guide
+**向后兼容**: 原有的 `--cookies-file` 参数仍然有效,文件存储模式不受影响。
+
+如需切换到 Redis 存储模式:
+1. 在 `.env` 中设置 `COOKIE_STORAGE=redis`
+2. 使用 `--login-url` 进行首次登录
+3. 后续爬取自动使用 Redis 中的 Cookie
+
+---
+
 ## [1.1.0] - 2025-11-26
 
 ### Added

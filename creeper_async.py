@@ -43,15 +43,33 @@ class AsyncCreeper:
         # 初始化 Cookie 管理器(如果指定)
         self.cookie_manager = None
         if args.cookies_file:
+            # 使用文件存储模式(向后兼容)
             self.cookie_manager = CookieManager(
                 cookies_file=args.cookies_file,
-                format='json'
+                format='json',
+                storage_backend='file'
             )
-            logger.info(f"已启用 Cookie 管理,文件: {args.cookies_file}")
+            logger.info(f"已启用 Cookie 管理(文件模式),文件: {args.cookies_file}")
+        elif config.COOKIE_STORAGE == 'redis':
+            # 使用 Redis 存储模式
+            self.cookie_manager = CookieManager(
+                storage_backend='redis',
+                redis_client=None,  # 延迟初始化
+                redis_key_prefix=config.COOKIE_REDIS_KEY_PREFIX,
+                expire_days=config.COOKIE_EXPIRE_DAYS
+            )
+            logger.info(f"已启用 Cookie 管理(Redis 模式),过期时间: {config.COOKIE_EXPIRE_DAYS} 天")
 
         # 初始化各个模块
         self.parser = None
         self.dedup = DedupManager()
+
+        # 如果 cookie_manager 使用 Redis 模式,传入 redis_client
+        if self.cookie_manager and self.cookie_manager.storage_backend == 'redis':
+            self.cookie_manager.redis_client = self.dedup.redis
+            # 重新加载 Cookie
+            self.cookie_manager._load_all_from_redis()
+
         self.fetcher = AsyncWebFetcher(
             use_playwright=not args.no_playwright,
             concurrency=args.concurrency,
@@ -211,6 +229,8 @@ def parse_args():
     parser.add_argument(
         'input_file',
         type=str,
+        nargs='?',  # 可选参数
+        default=None,
         help='Markdown 输入文件路径'
     )
 
@@ -260,9 +280,16 @@ def parse_args():
     )
 
     parser.add_argument(
+        '--login-url',
+        type=str,
+        default=None,
+        help='需要登录的 URL,启动交互式登录流程'
+    )
+
+    parser.add_argument(
         '-v', '--version',
         action='version',
-        version='Creeper 1.0.0'
+        version='Creeper 1.2.0'
     )
 
     return parser.parse_args()
@@ -281,7 +308,66 @@ def main():
         import logging
         logging.getLogger("creeper").setLevel(logging.DEBUG)
 
+    # 如果指定了 --login-url,执行交互式登录
+    if args.login_url:
+        from src.interactive_login import interactive_login
+
+        async def do_login():
+            try:
+                # 执行交互式登录
+                domain_cookies = await interactive_login(
+                    args.login_url,
+                    timeout=config.INTERACTIVE_LOGIN_TIMEOUT
+                )
+
+                if not domain_cookies:
+                    logger.error("未提取到任何 Cookie")
+                    return False
+
+                # 创建 cookie_manager
+                from src.dedup import DedupManager
+                dedup = DedupManager()
+
+                cookie_manager = CookieManager(
+                    storage_backend='redis',
+                    redis_client=dedup.redis,
+                    redis_key_prefix=config.COOKIE_REDIS_KEY_PREFIX,
+                    expire_days=config.COOKIE_EXPIRE_DAYS
+                )
+
+                # 保存 Cookie
+                for domain, cookies in domain_cookies.items():
+                    cookie_manager.set_cookies(domain, cookies)
+
+                success = cookie_manager.save()
+
+                if success:
+                    logger.info("=" * 60)
+                    logger.info("✅ Cookie 已成功保存到 Redis")
+                    logger.info(f"   共保存 {len(domain_cookies)} 个域的 Cookie")
+                    logger.info(f"   过期时间: {config.COOKIE_EXPIRE_DAYS} 天")
+                    logger.info("   后续爬取将自动使用这些 Cookie")
+                    logger.info("=" * 60)
+                else:
+                    logger.error("Cookie 保存失败")
+                    return False
+
+                dedup.close()
+                return True
+
+            except Exception as e:
+                logger.error(f"交互式登录失败: {e}", exc_info=True)
+                return False
+
+        # 运行交互式登录
+        success = asyncio.run(do_login())
+        sys.exit(0 if success else 1)
+
     # 检查输入文件
+    if not args.input_file:
+        logger.error("错误: 必须提供输入文件或使用 --login-url 进行登录")
+        sys.exit(1)
+
     if not Path(args.input_file).exists():
         logger.error(f"输入文件不存在: {args.input_file}")
         sys.exit(1)
