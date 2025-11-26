@@ -1,0 +1,64 @@
+# Python 虚拟环境
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# Python 编译文件
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 环境变量配置
+.env
+
+# 日志文件
+*.log
+logs/
+creeper.log
+
+# 输出目录
+output/
+data/
+
+# IDE 配置
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Playwright 浏览器
+.playwright/
+
+# 测试覆盖率
+.coverage
+.pytest_cache/
+htmlcov/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# 临时文件
+*.tmp
+*.bak
+*.orig

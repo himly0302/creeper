@@ -1,0 +1,30 @@
+# Creeper 核心依赖
+# Python 版本要求: >=3.8
+
+# 网页内容提取
+trafilatura>=1.12.0          # 专业文章内容提取,内置清洗功能
+beautifulsoup4>=4.12.0       # HTML 解析,提取元数据
+lxml>=5.3.0                  # trafilatura 依赖的 XML 解析器
+
+# 动态网页渲染
+playwright>=1.51.0           # 浏览器自动化,处理 JavaScript 渲染
+
+# HTTP 请求
+requests>=2.31.0             # 标准 HTTP 客户端
+aiohttp>=3.10.0              # 异步 HTTP 客户端(用于并发)
+
+# 去重存储
+redis>=6.4.0                 # Redis 客户端
+
+# 配置管理
+python-dotenv>=1.0.0         # 环境变量加载
+
+# 进度展示
+tqdm>=4.66.0                 # 进度条
+
+# 日志
+colorlog>=6.8.0              # 彩色日志输出
+
+# 工具库
+python-slugify>=8.0.0        # 文件名安全处理
+charset-normalizer>=3.3.0    # 字符编码检测
