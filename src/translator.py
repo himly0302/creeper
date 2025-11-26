@@ -69,7 +69,8 @@ class Translator:
         self,
         text: str,
         source_lang: str = "en",
-        target_lang: str = "zh"
+        target_lang: str = "zh",
+        skip_detection: bool = False  # 新增参数:跳过语言检测
     ) -> str:
         """
         翻译文本
@@ -78,6 +79,7 @@ class Translator:
             text: 待翻译文本
             source_lang: 源语言 (默认英文)
             target_lang: 目标语言 (默认中文)
+            skip_detection: 是否跳过语言检测(默认False)
 
         Returns:
             翻译后的文本
@@ -85,15 +87,16 @@ class Translator:
         if not text or not text.strip():
             return text
 
-        # 检测语言
-        detected_lang = self.detect_language(text)
-        if detected_lang == target_lang:
-            logger.info(f"内容已是目标语言({target_lang}),跳过翻译")
-            return text
+        # 检测语言 (除非明确跳过)
+        if not skip_detection:
+            detected_lang = self.detect_language(text)
+            if detected_lang == target_lang:
+                logger.info(f"内容已是目标语言({target_lang}),跳过翻译")
+                return text
 
-        if detected_lang == "unknown":
-            logger.warning("无法检测语言,跳过翻译")
-            return text
+            if detected_lang == "unknown":
+                logger.warning("无法检测语言,跳过翻译")
+                return text
 
         # 构建提示词
         lang_names = {"en": "英文", "zh": "中文"}
@@ -178,7 +181,19 @@ class Translator:
         results = {}
         for field_name, text in translation_tasks:
             try:
-                results[field_name] = await self.translate(text)
+                # 单个字段的语言检测
+                field_lang = self.detect_language(text)
+                if field_lang == "unknown":
+                    logger.debug(f"[{field_name}] 无法检测语言,保留原文")
+                    results[field_name] = text
+                    continue
+                elif field_lang != "en":
+                    logger.debug(f"[{field_name}] 内容非英文({field_lang}),保留原文")
+                    results[field_name] = text
+                    continue
+
+                # 执行翻译 (跳过重复的语言检测)
+                results[field_name] = await self.translate(text, skip_detection=True)
             except Exception as e:
                 logger.error(f"翻译 {field_name} 失败: {e}")
                 results[field_name] = text  # 保留原文
