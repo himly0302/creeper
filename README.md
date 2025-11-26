@@ -285,6 +285,29 @@ deactivate
 rm -rf venv
 ```
 
+### Q6: 如何清空测试数据重新测试?
+
+**使用清理脚本** (推荐):
+```bash
+# 运行清理脚本,会清空:
+# - Redis 中的爬取记录
+# - output/ 目录下的所有文件
+# - creeper.log 日志文件
+./clean.sh
+```
+
+**手动清理**:
+```bash
+# 清空 Redis
+redis-cli -n 1 KEYS "creeper:*" | xargs redis-cli -n 1 DEL
+
+# 删除输出文件
+rm -rf output/*
+
+# 删除日志
+rm -f creeper.log
+```
+
 ## 📝 开发计划
 
 查看 [docs/requirements.md](docs/requirements.md) 了解完整需求和开发计划。

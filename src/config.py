@@ -1,0 +1,84 @@
+"""
+配置管理模块
+从 .env 文件加载配置
+"""
+
+import os
+from typing import List
+from dotenv import load_dotenv
+
+# 加载 .env 文件
+load_dotenv()
+
+
+class Config:
+    """全局配置类"""
+
+    # Redis 配置
+    REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+    REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
+    REDIS_DB = int(os.getenv('REDIS_DB', 1))
+    REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', '')
+    REDIS_KEY_PREFIX = os.getenv('REDIS_KEY_PREFIX', 'creeper:')
+
+    # 爬虫配置
+    CONCURRENCY = int(os.getenv('CONCURRENCY', 5))
+    REQUEST_TIMEOUT = int(os.getenv('REQUEST_TIMEOUT', 30))
+    MIN_DELAY = float(os.getenv('MIN_DELAY', 1))
+    MAX_DELAY = float(os.getenv('MAX_DELAY', 3))
+    MAX_RETRIES = int(os.getenv('MAX_RETRIES', 3))
+    RETRY_BASE_DELAY = float(os.getenv('RETRY_BASE_DELAY', 2))
+
+    # 浏览器配置
+    BROWSER_TYPE = os.getenv('BROWSER_TYPE', 'chromium')
+    BROWSER_HEADLESS = os.getenv('BROWSER_HEADLESS', 'true').lower() == 'true'
+    PAGE_TIMEOUT = int(os.getenv('PAGE_TIMEOUT', 60000))
+
+    # User-Agent 池
+    USER_AGENTS = os.getenv(
+        'USER_AGENTS',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36,'
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36,'
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+    ).split(',')
+
+    # 内容提取配置
+    INCLUDE_COMMENTS = os.getenv('INCLUDE_COMMENTS', 'false').lower() == 'true'
+    INCLUDE_TABLES = os.getenv('INCLUDE_TABLES', 'true').lower() == 'true'
+    INCLUDE_IMAGES = os.getenv('INCLUDE_IMAGES', 'true').lower() == 'true'
+    MIN_TEXT_LENGTH = int(os.getenv('MIN_TEXT_LENGTH', 100))
+
+    # 输出配置
+    OUTPUT_DIR = os.getenv('OUTPUT_DIR', './output')
+    MAX_FILENAME_LENGTH = int(os.getenv('MAX_FILENAME_LENGTH', 100))
+    SAVE_FAILED_URLS = os.getenv('SAVE_FAILED_URLS', 'true').lower() == 'true'
+
+    # 调试配置
+    DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
+    LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
+    LOG_FILE = os.getenv('LOG_FILE', 'creeper.log')
+
+    @classmethod
+    def get_redis_url(cls) -> str:
+        """获取 Redis 连接 URL"""
+        if cls.REDIS_PASSWORD:
+            return f"redis://:{cls.REDIS_PASSWORD}@{cls.REDIS_HOST}:{cls.REDIS_PORT}/{cls.REDIS_DB}"
+        return f"redis://{cls.REDIS_HOST}:{cls.REDIS_PORT}/{cls.REDIS_DB}"
+
+    @classmethod
+    def display(cls):
+        """显示当前配置(调试用)"""
+        print("=== 当前配置 ===")
+        print(f"Redis: {cls.REDIS_HOST}:{cls.REDIS_PORT}/{cls.REDIS_DB}")
+        print(f"并发数: {cls.CONCURRENCY}")
+        print(f"请求超时: {cls.REQUEST_TIMEOUT}s")
+        print(f"请求间隔: {cls.MIN_DELAY}s - {cls.MAX_DELAY}s")
+        print(f"最大重试: {cls.MAX_RETRIES}")
+        print(f"输出目录: {cls.OUTPUT_DIR}")
+        print(f"调试模式: {cls.DEBUG}")
+        print(f"日志级别: {cls.LOG_LEVEL}")
+        print("================")
+
+
+# 创建全局配置实例
+config = Config()
