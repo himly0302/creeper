@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.4.3] - 2025-11-26
+
+### Fixed
+- ⚡ **翻译性能优化**: 批量翻译减少API调用次数
+  - 将多个字段(title/description/content)合并为一次LLM调用
+  - 使用 `---FIELD_SEPARATOR---` 分隔符组合字段
+  - API调用次数减少 50% (2-3次 → 1次)
+  - 降低API成本,提升爬取速度
+  - 失败时自动降级为逐个翻译
+  - 相关文件: `src/translator.py:106-115`, `src/translator.py:180-234`
+- 🐛 **依赖修复**: 安装 brotli 库解决 VS Code 文档爬取失败
+  - 修复 "Can not decode content-encoding: brotli" 错误
+  - 优化翻译日志,避免重复语言检测
+
 ## [1.4.2] - 2025-11-26
 
 ### Fixed

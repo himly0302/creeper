@@ -111,7 +111,8 @@ class Translator:
 1. 保持原文的 Markdown 格式(标题、列表、代码块等)
 2. 专业术语保持准确
 3. 语句通顺自然
-4. 仅返回翻译结果,不要添加额外说明"""
+4. 如果文本中包含 ---FIELD_SEPARATOR--- 分隔符,必须在翻译结果中保留该分隔符的完整位置
+5. 仅返回翻译结果,不要添加额外说明"""
 
         # 调用 API
         try:
@@ -177,26 +178,61 @@ class Translator:
         if config.TRANSLATE_METADATA and page.author:
             translation_tasks.append(("author", page.author))
 
-        # 3. 并发翻译
+        # 3. 批量翻译(一次API调用翻译所有字段)
         results = {}
-        for field_name, text in translation_tasks:
-            try:
-                # 单个字段的语言检测
-                field_lang = self.detect_language(text)
-                if field_lang == "unknown":
-                    logger.debug(f"[{field_name}] 无法检测语言,保留原文")
-                    results[field_name] = text
-                    continue
-                elif field_lang != "en":
-                    logger.debug(f"[{field_name}] 内容非英文({field_lang}),保留原文")
-                    results[field_name] = text
-                    continue
 
-                # 执行翻译 (跳过重复的语言检测)
-                results[field_name] = await self.translate(text, skip_detection=True)
+        # 3.1 过滤需要翻译的字段
+        fields_to_translate = []
+        for field_name, text in translation_tasks:
+            field_lang = self.detect_language(text)
+            if field_lang == "unknown":
+                logger.debug(f"[{field_name}] 无法检测语言,保留原文")
+                results[field_name] = text
+            elif field_lang != "en":
+                logger.debug(f"[{field_name}] 内容非英文({field_lang}),保留原文")
+                results[field_name] = text
+            else:
+                fields_to_translate.append((field_name, text))
+
+        # 3.2 批量翻译所有字段(一次API调用)
+        if fields_to_translate:
+            try:
+                # 构建批量翻译文本
+                field_names = [name for name, _ in fields_to_translate]
+                texts = [text for _, text in fields_to_translate]
+
+                # 使用特殊分隔符组合多个字段
+                combined_text = "\n\n---FIELD_SEPARATOR---\n\n".join(texts)
+                total_chars = sum(len(t) for t in texts)
+
+                logger.info(f"批量翻译 {len(fields_to_translate)} 个字段: {total_chars} 字符...")
+
+                # 调用翻译API(一次调用)
+                translated_combined = await self.translate(combined_text, skip_detection=True)
+
+                # 分割翻译结果
+                translated_parts = translated_combined.split("---FIELD_SEPARATOR---")
+
+                # 映射回对应字段
+                for i, field_name in enumerate(field_names):
+                    if i < len(translated_parts):
+                        results[field_name] = translated_parts[i].strip()
+                    else:
+                        logger.warning(f"[{field_name}] 翻译结果缺失,保留原文")
+                        results[field_name] = texts[i]
+
+                translated_chars = sum(len(results[name]) for name in field_names)
+                logger.info(f"批量翻译成功: {total_chars} 字符 → {translated_chars} 字符")
+
             except Exception as e:
-                logger.error(f"翻译 {field_name} 失败: {e}")
-                results[field_name] = text  # 保留原文
+                logger.error(f"批量翻译失败,降级为逐个翻译: {e}")
+                # 降级:逐个翻译
+                for field_name, text in fields_to_translate:
+                    try:
+                        results[field_name] = await self.translate(text, skip_detection=True)
+                    except Exception as inner_e:
+                        logger.error(f"翻译 {field_name} 失败: {inner_e}")
+                        results[field_name] = text
 
         # 4. 更新 WebPage 对象
         if "title" in results:
