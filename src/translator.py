@@ -185,7 +185,13 @@ class Translator:
 
         # 4. 更新 WebPage 对象
         if "title" in results:
-            page.title = results["title"]
+            # 清理标题中的 Markdown 格式符号,只保留第一行纯文本
+            translated_title = results["title"]
+            # 移除 Markdown 标题符号 (#)
+            translated_title = translated_title.lstrip('#').strip()
+            # 只取第一行作为标题
+            translated_title = translated_title.split('\n')[0].strip()
+            page.title = translated_title
 
         if "description" in results:
             page.description = results["description"]
