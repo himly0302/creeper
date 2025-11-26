@@ -6,6 +6,51 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.4.0] - 2025-11-26
+
+### Added
+- 🌍 **内容自动翻译**: 支持将英文网页内容自动翻译为中文
+  - 集成 DeepSeek API 实现高质量翻译
+  - 使用 langdetect 自动检测语言,仅翻译英文内容
+  - 支持翻译标题、摘要、正文和元数据
+  - 可通过 `.env` 配置灵活控制翻译范围
+  - 相关文件: `src/translator.py`
+- 📋 新增翻译配置项:
+  - `ENABLE_TRANSLATION`: 启用/禁用翻译功能
+  - `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`, `DEEPSEEK_MODEL`: API 配置
+  - `TRANSLATE_TITLE`, `TRANSLATE_DESCRIPTION`, `TRANSLATE_CONTENT`, `TRANSLATE_METADATA`: 选择性翻译
+
+### Changed
+- 🔧 `AsyncWebFetcher` 集成翻译器,爬取成功后自动翻译
+- 📋 `WebPage` 数据类新增字段: `translated` (是否已翻译), `original_language` (原始语言)
+- ⚙️ 翻译失败时保留原文,不影响爬取结果
+
+### Technical
+- 使用 OpenAI SDK 兼容 DeepSeek API
+- 语言检测使用前 1000 字符,提高检测速度
+- 翻译提示词优化,保持 Markdown 格式完整性
+- 翻译参数: `temperature=0.3`, `max_tokens=8000`
+- 翻译器仅在异步模式中可用(OpenAI SDK 为异步优先)
+
+### Dependencies
+- openai>=1.0.0 (兼容 DeepSeek API)
+- langdetect>=1.0.9 (语言检测)
+- tiktoken>=0.5.0 (Token 计数)
+
+### Usage Example
+```bash
+# 1. 配置 .env 文件
+ENABLE_TRANSLATION=true
+DEEPSEEK_API_KEY=your-api-key-here
+
+# 2. 运行爬虫(默认异步模式,自动翻译)
+python creeper.py input.md
+
+# 3. 英文内容将自动翻译为中文并保存
+```
+
+---
+
 ## [1.3.0] - 2025-11-26
 
 ### Changed

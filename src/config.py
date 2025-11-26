@@ -59,6 +59,19 @@ class Config:
     COOKIE_REDIS_KEY_PREFIX = os.getenv('COOKIE_REDIS_KEY_PREFIX', 'creeper:cookie:')
     INTERACTIVE_LOGIN_TIMEOUT = int(os.getenv('INTERACTIVE_LOGIN_TIMEOUT', 300))  # 交互式登录超时(秒)
 
+    # 翻译配置
+    ENABLE_TRANSLATION = os.getenv('ENABLE_TRANSLATION', 'false').lower() == 'true'
+    DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY', '')
+    DEEPSEEK_BASE_URL = os.getenv('DEEPSEEK_BASE_URL', 'https://api.deepseek.com')
+    DEEPSEEK_MODEL = os.getenv('DEEPSEEK_MODEL', 'deepseek-chat')
+
+    # 翻译范围
+    TRANSLATE_TITLE = os.getenv('TRANSLATE_TITLE', 'true').lower() == 'true'
+    TRANSLATE_DESCRIPTION = os.getenv('TRANSLATE_DESCRIPTION', 'true').lower() == 'true'
+    TRANSLATE_CONTENT = os.getenv('TRANSLATE_CONTENT', 'true').lower() == 'true'
+    TRANSLATE_METADATA = os.getenv('TRANSLATE_METADATA', 'false').lower() == 'true'
+
+
     # 调试配置
     DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')

@@ -33,6 +33,8 @@ class WebPage:
     method: str = "static"  # static 或 dynamic
     success: bool = True
     error: Optional[str] = None
+    translated: bool = False  # 是否已翻译
+    original_language: str = "unknown"  # 原始语言
 
     def __post_init__(self):
         if not self.crawled_at:

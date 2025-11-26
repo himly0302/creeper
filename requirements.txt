@@ -28,3 +28,8 @@ colorlog>=6.8.0              # 彩色日志输出
 # 工具库
 python-slugify>=8.0.0        # 文件名安全处理
 charset-normalizer>=3.3.0    # 字符编码检测
+
+# 翻译功能
+openai>=1.0.0                # OpenAI SDK (兼容 DeepSeek API)
+langdetect>=1.0.9            # 语言检测
+tiktoken>=0.5.0              # Token 计数

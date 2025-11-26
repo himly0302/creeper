@@ -39,6 +39,19 @@ class AsyncWebFetcher:
         self.cookie_manager = cookie_manager
         self.semaphore = asyncio.Semaphore(self.concurrency)
 
+        # 初始化翻译器
+        self.translator = None
+        if config.ENABLE_TRANSLATION and config.DEEPSEEK_API_KEY:
+            from .translator import Translator
+
+            self.translator = Translator(
+                api_key=config.DEEPSEEK_API_KEY,
+                base_url=config.DEEPSEEK_BASE_URL,
+                model=config.DEEPSEEK_MODEL
+            )
+            logger.info("翻译功能已启用 (DeepSeek)")
+
+
         if cookie_manager:
             logger.info(f"异步网页爬取器已初始化 (并发数: {self.concurrency}, Playwright: {use_playwright}, Cookie: 已启用)")
         else:
@@ -77,6 +90,12 @@ class AsyncWebFetcher:
                 page = await self._fetch_static(url)
                 if page.success and len(page.content) >= config.MIN_TEXT_LENGTH:
                     logger.info(f"✓ 静态爬取成功: {url}")
+                    # 调用翻译
+                    if self.translator:
+                        try:
+                            page = await self.translator.translate_webpage(page)
+                        except Exception as e:
+                            logger.error(f"翻译失败(保留原文): {e}")
                     return page
                 else:
                     logger.warning(f"静态爬取内容不足(<{config.MIN_TEXT_LENGTH}字符),尝试动态渲染...")
@@ -89,6 +108,12 @@ class AsyncWebFetcher:
                     page = await self._fetch_dynamic(url)
                     if page.success:
                         logger.info(f"✓ 动态渲染成功: {url}")
+                        # 调用翻译
+                        if self.translator:
+                            try:
+                                page = await self.translator.translate_webpage(page)
+                            except Exception as e:
+                                logger.error(f"翻译失败(保留原文): {e}")
                         return page
                 except Exception as e:
                     logger.error(f"动态渲染失败: {e}")

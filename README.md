@@ -3,12 +3,13 @@
 > 一个简单实用的网页爬虫工具,将 Markdown 文件中的 URL 批量爬取并保存为结构化的本地 Markdown 文档。
 
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
-[![Version](https://img.shields.io/badge/version-1.3.0-green)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.4.0-green)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 ## ✨ 特性
 
 - 🚀 **异步并发**: 支持多URL并发爬取,速度提升40-50%
+- 🌍 **智能翻译**: 自动识别英文内容并翻译为中文(DeepSeek API)
 - 🧠 **智能提取**: 使用 Trafilatura 精准提取文章核心内容,过滤广告
 - 🎭 **动态渲染**: 自动降级到 Playwright 处理 JavaScript 渲染页面
 - 🔄 **自动去重**: Redis 存储已爬取 URL,避免重复工作
@@ -19,6 +20,12 @@
 - 🎨 **友好界面**: 彩色日志、实时进度条、详细统计
 
 ## 📋 功能
+
+**V1.4 新增** 🌍
+- ✅ 内容自动翻译(英文→中文)
+- ✅ 集成 DeepSeek API
+- ✅ 智能语言检测,仅翻译英文内容
+- ✅ 可配置翻译范围(标题/摘要/正文/元数据)
 
 **V1.3 新增** 🔧
 - ✅ 统一 CLI 入口(合并同步/异步模式)
@@ -59,6 +66,8 @@
 | BeautifulSoup4 | 4.12+ | HTML 解析 |
 | Redis | 6.4+ | 去重存储 |
 | Requests | 2.31+ | HTTP 请求 |
+| OpenAI | 1.0+ | DeepSeek API 兼容 |
+| langdetect | 1.0+ | 语言检测 |
 
 ## 📦 安装
 
@@ -237,10 +246,40 @@ MIN_DELAY=1               # 最小请求间隔
 MAX_DELAY=3               # 最大请求间隔
 MAX_RETRIES=3             # 最大重试次数
 
+# 翻译配置 (可选)
+ENABLE_TRANSLATION=false   # 启用翻译功能
+DEEPSEEK_API_KEY=          # DeepSeek API Key (https://platform.deepseek.com/)
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_MODEL=deepseek-chat
+
+# 翻译范围 (选择性翻译)
+TRANSLATE_TITLE=true       # 翻译标题
+TRANSLATE_DESCRIPTION=true # 翻译摘要
+TRANSLATE_CONTENT=true     # 翻译正文
+TRANSLATE_METADATA=false   # 翻译元数据(作者等)
+
 # 调试模式
 DEBUG=false
 LOG_LEVEL=INFO
 ```
+
+### 翻译功能使用说明
+
+翻译功能可将英文网页内容自动翻译为中文(使用 DeepSeek API):
+
+1. **获取 API Key**: 访问 [DeepSeek 平台](https://platform.deepseek.com/) 注册并获取 API Key
+2. **配置 `.env`**: 设置 `ENABLE_TRANSLATION=true` 和 `DEEPSEEK_API_KEY`
+3. **运行爬虫**: 使用异步模式 `python creeper.py input.md`
+4. **自动翻译**:
+   - 自动检测英文内容
+   - 翻译完成后保存中文版本
+   - 非英文内容保持原样
+   - 翻译失败时保留原文
+
+**注意**:
+- 翻译功能仅在异步模式下可用(`python creeper.py`)
+- 同步模式(`--sync`)不支持翻译
+- 翻译大量内容可能需要较长时间,请耐心等待
 
 ## 🔧 命令行参数
 
