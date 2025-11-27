@@ -121,8 +121,8 @@ async def main():
     logger.info(f"文件类型过滤: {extensions}")
 
     # 检查 API 配置
-    if not config.DEEPSEEK_API_KEY:
-        logger.error("未配置 DEEPSEEK_API_KEY,请在 .env 文件中添加")
+    if not config.AGGREGATOR_API_KEY:
+        logger.error("未配置 AGGREGATOR_API_KEY,请在 .env 文件中添加")
         sys.exit(1)
 
     try:
@@ -135,10 +135,10 @@ async def main():
         file_scanner = FileScanner()
         cache_mgr = AggregatorCache()
         llm_aggregator = LLMAggregator(
-            api_key=config.DEEPSEEK_API_KEY,
-            base_url=config.DEEPSEEK_BASE_URL,
-            model=getattr(config, 'AGGREGATOR_MODEL', config.DEEPSEEK_MODEL),
-            max_tokens=getattr(config, 'AGGREGATOR_MAX_TOKENS', 4000)
+            api_key=config.AGGREGATOR_API_KEY,
+            base_url=config.AGGREGATOR_BASE_URL,
+            model=config.AGGREGATOR_MODEL,
+            max_tokens=config.AGGREGATOR_MAX_TOKENS
         )
 
         # 加载提示词模板

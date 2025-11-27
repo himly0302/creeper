@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.6.1] - 2025-11-27
+
+### Changed
+- ⚙️ **配置分离**: 翻译功能和文件整合功能使用独立的 LLM API 配置
+  - 翻译功能: `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`, `DEEPSEEK_MODEL`
+  - 文件整合: `AGGREGATOR_API_KEY`, `AGGREGATOR_BASE_URL`, `AGGREGATOR_MODEL`
+  - 两个功能可以使用不同的 API Key 或服务商
+  - 相关文件: `src/config.py`, `.env.example`, `aggregator.py`
+
 ## [1.6.0] - 2025-11-27
 
 ### Added
@@ -13,10 +22,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - 递归扫描文件夹并读取文件内容
   - 支持增量更新(基于 Redis 缓存已处理文件)
   - 预设 3 种提示词模板(代码总结、文档合并、数据分析)
-  - 自动调用 DeepSeek API 生成整合文档
+  - 自动调用 LLM API 生成整合文档
   - 支持自定义文件类型过滤(--extensions)
   - 混合持久化(Redis + 本地 JSON)
-  - 新增配置: `AGGREGATOR_CONCURRENCY`, `AGGREGATOR_MAX_TOKENS`, `AGGREGATOR_MODEL`
+  - 新增配置: `AGGREGATOR_*` 系列配置项
   - 相关文件: `aggregator.py`, `src/file_aggregator.py`, `src/prompt_templates.py`
 - 📚 **提示词模板系统**: 可扩展的 LLM 提示词管理
   - 支持 `prompts/` 目录下自定义 `.txt` 模板文件

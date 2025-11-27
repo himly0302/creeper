@@ -586,9 +586,10 @@ rm -f creeper.log
 
 **步骤**:
 
-1. **配置 DeepSeek API Key**:
-   - 编辑 `.env` 文件,添加 `DEEPSEEK_API_KEY=sk-your-key-here`
-   - (如果已配置翻译功能,可复用同一个 Key)
+1. **配置 LLM API Key**:
+   - 编辑 `.env` 文件,添加 `AGGREGATOR_API_KEY=sk-your-key-here`
+   - 也可配置 `AGGREGATOR_BASE_URL` 和 `AGGREGATOR_MODEL`
+   - 注意: 文件整合功能使用独立的 API 配置,与翻译功能分离
 
 2. **查看可用模板**:
    ```bash
