@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-Creeper 是一个网页爬虫工具，从 Markdown 文件中提取 URL 并保存为结构化的本地 Markdown 文档。支持同步和异步两种爬取模式，基于 Redis 的去重机制，可选的内容翻译功能。
+Creeper 是一个网页爬虫工具，从 Markdown 文件中提取 URL 并保存为结构化的本地 Markdown 文档。支持同步和异步两种爬取模式，基于 Redis 的去重机制，可选的内容翻译功能。V1.6 新增文件夹内容 LLM 整合功能。
 
-**当前版本**: v1.5.0
+**当前版本**: v1.6.0
 
 ## 开发命令
 
@@ -44,6 +44,21 @@ python creeper.py input.md --force
 python creeper.py --login-url https://example.com/login
 ```
 
+### 运行文件整合 (V1.6 新增)
+```bash
+# 代码总结
+python3 aggregator.py --folder ./src --output ./docs/code_summary.md --template code_summary
+
+# 文档合并
+python3 aggregator.py --folder ./docs --output ./merged.md --template doc_merge --extensions .md,.txt
+
+# 列出可用模板
+python3 aggregator.py --list-templates
+
+# 强制重新处理所有文件
+python3 aggregator.py --folder ./src --output ./docs/code_summary.md --template code_summary --force
+```
+
 ### 测试
 ```bash
 # 运行所有测试
@@ -51,6 +66,9 @@ pytest tests/
 
 # 运行特定测试文件
 pytest tests/test_parser.py
+
+# 运行文件整合功能测试
+pytest tests/file_aggregator/
 ```
 
 ### 清理
@@ -119,6 +137,7 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 - `ENABLE_LOCAL_PERSISTENCE`: Redis 备份到本地文件（默认: true）
 - `ENABLE_TRANSLATION`: 自动翻译英文内容（默认: false，需要 DeepSeek API key）
 - `COOKIE_STORAGE`: `redis`（默认）或 `file`
+- `AGGREGATOR_*`: 文件整合功能配置（V1.6 新增）
 
 ## 项目结构约定
 
@@ -127,6 +146,8 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 - `data/`: 本地持久化缓存文件
 - `output/`: 生成的 Markdown 文件（镜像输入的 H1/H2 层级）
 - `docs/`: 需求和设计文档
+- `prompts/`: 提示词模板目录（用于文件夹内容整合功能，V1.6 新增）
+- `docs/features/`: 功能需求文档（V1.6 新增）
 
 ## 重要实现细节
 
@@ -157,6 +178,11 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 **修改去重逻辑**: 编辑 `DedupManager`，确保 Redis 和文件操作都是原子性的
 
 **添加翻译语言对**: 修改 `translator.py`，更新 langdetect 逻辑
+
+**添加新的提示词模板** (V1.6 新增): 在 `prompts/` 创建 `.txt` 文件，通过 `--template` 参数使用
+- 模板内容使用中文编写，清晰描述任务和输出要求
+- 建议在模板中包含"如果提供了已有内容,请将新信息整合进去"的增量更新逻辑
+- 文件名使用 snake_case 命名（如 `code_summary.txt`）
 
 ## Git 提交规范
 

@@ -77,6 +77,12 @@ class Config:
     TRANSLATE_CONTENT = os.getenv('TRANSLATE_CONTENT', 'true').lower() == 'true'
     TRANSLATE_METADATA = os.getenv('TRANSLATE_METADATA', 'false').lower() == 'true'
 
+    # 文件夹内容整合配置
+    AGGREGATOR_CONCURRENCY = int(os.getenv('AGGREGATOR_CONCURRENCY', 1))
+    AGGREGATOR_PROMPTS_DIR = os.getenv('AGGREGATOR_PROMPTS_DIR', 'prompts')
+    AGGREGATOR_MAX_TOKENS = int(os.getenv('AGGREGATOR_MAX_TOKENS', 4000))
+    AGGREGATOR_MODEL = os.getenv('AGGREGATOR_MODEL', 'deepseek-chat')
+    AGGREGATOR_MAX_FILE_SIZE = int(os.getenv('AGGREGATOR_MAX_FILE_SIZE', 1048576))  # 1MB
 
     # 调试配置
     DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'

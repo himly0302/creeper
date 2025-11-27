@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.6.0] - 2025-11-27
+
+### Added
+- 🧩 **文件夹内容 LLM 整合**: 智能扫描文件夹并使用 LLM 整合内容
+  - 递归扫描文件夹并读取文件内容
+  - 支持增量更新(基于 Redis 缓存已处理文件)
+  - 预设 3 种提示词模板(代码总结、文档合并、数据分析)
+  - 自动调用 DeepSeek API 生成整合文档
+  - 支持自定义文件类型过滤(--extensions)
+  - 混合持久化(Redis + 本地 JSON)
+  - 新增配置: `AGGREGATOR_CONCURRENCY`, `AGGREGATOR_MAX_TOKENS`, `AGGREGATOR_MODEL`
+  - 相关文件: `aggregator.py`, `src/file_aggregator.py`, `src/prompt_templates.py`
+- 📚 **提示词模板系统**: 可扩展的 LLM 提示词管理
+  - 支持 `prompts/` 目录下自定义 `.txt` 模板文件
+  - 内置模板缓存机制
+  - 通过 `--list-templates` 查看所有可用模板
+- 🧪 **单元测试**: 新增文件扫描和模板管理测试
+  - `tests/file_aggregator/test_file_scanner.py`
+  - `tests/file_aggregator/test_aggregator_cache.py`
+
+### Changed
+- 📝 **文档更新**: 更新 README.md 添加文件整合功能使用说明
+- ⚙️ **配置扩展**: .env.example 新增 AGGREGATOR_* 配置项
+- 📂 **项目结构**: 新增 `prompts/` 和 `docs/features/` 目录
+
 ## [1.5.0] - 2025-11-27
 
 ### Added
