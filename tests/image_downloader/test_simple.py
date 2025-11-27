@@ -35,13 +35,17 @@ Regular text.
     urls = downloader.extract_image_urls(markdown)
 
     print(f"找到 {len(urls)} 个图片 URL:")
-    for alt, url in urls:
-        print(f"  - [{alt}] {url}")
+    for alt, original_url, resolved_url in urls:
+        print(f"  - [{alt}] {original_url} -> {resolved_url}")
 
     assert len(urls) == 3, f"预期 3 个 URL，实际 {len(urls)} 个"
-    assert ('Logo', 'https://example.com/logo.png') in urls
-    assert ('Banner', 'https://cdn.example.com/images/banner.jpg') in urls
-    assert ('Relative', 'https://example.com/static/img.png') in urls
+    # 检查格式: (alt_text, original_markdown_url, resolved_url)
+    assert ('Logo', 'https://example.com/logo.png', 'https://example.com/logo.png') in urls
+    assert ('Banner', 'https://cdn.example.com/images/banner.jpg', 'https://cdn.example.com/images/banner.jpg') in urls
+    # 相对路径应该被转换为绝对路径
+    assert urls[2][0] == 'Relative'
+    assert urls[2][1] == '/static/img.png'  # 原始 URL
+    assert urls[2][2] == 'https://example.com/static/img.png'  # 解析后的 URL
 
     print("✓ URL 提取测试通过")
 
