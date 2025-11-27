@@ -157,9 +157,20 @@ class AggregatorCache:
     def __init__(self):
         """初始化缓存管理器"""
         try:
-            from src.dedup import redis_client
-            self.redis = redis_client
-            self.redis_available = self.redis is not None
+            import redis
+            self.redis = redis.Redis(
+                host=config.REDIS_HOST,
+                port=config.REDIS_PORT,
+                db=config.REDIS_DB,
+                password=config.REDIS_PASSWORD if config.REDIS_PASSWORD else None,
+                decode_responses=True,
+                socket_connect_timeout=5,
+                socket_timeout=5
+            )
+            # 测试连接
+            self.redis.ping()
+            self.redis_available = True
+            logger.debug("Redis 连接成功")
         except Exception as e:
             logger.warning(f"Redis 连接失败: {e}")
             self.redis = None
