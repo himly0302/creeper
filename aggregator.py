@@ -51,17 +51,14 @@ async def main():
 
     parser.add_argument(
         '--folder',
-        required=True,
         help='要扫描的文件夹路径'
     )
     parser.add_argument(
         '--output',
-        required=True,
         help='输出文件路径'
     )
     parser.add_argument(
         '--template',
-        required=True,
         help='提示词模板名称(不含 .txt 后缀)'
     )
     parser.add_argument(
@@ -104,6 +101,10 @@ async def main():
         else:
             print("\n未找到提示词模板,请在 prompts/ 目录创建 .txt 文件")
         sys.exit(0)
+
+    # 验证必需参数
+    if not args.folder or not args.output or not args.template:
+        parser.error("--folder, --output 和 --template 是必需参数")
 
     # 验证文件夹路径
     folder_path = Path(args.folder)

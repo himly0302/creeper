@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.6.2] - 2025-11-27
+
+### Fixed
+- 🐛 **模块导入**: 修复 `src.file_aggregator` 模块缺失导致的 ModuleNotFoundError
+  - 创建缺失的 `src/file_aggregator.py` 文件（包含 FileScanner, AggregatorCache, LLMAggregator）
+  - 修复 `aggregator.py` 的命令行参数解析逻辑，使 `--list-templates` 可独立运行
+  - 相关文件: `src/file_aggregator.py`, `aggregator.py`
+
 ## [1.6.1] - 2025-11-27
 
 ### Changed
