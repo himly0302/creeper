@@ -3,13 +3,14 @@
 > 一个简单实用的网页爬虫工具,将 Markdown 文件中的 URL 批量爬取并保存为结构化的本地 Markdown 文档。
 
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
-[![Version](https://img.shields.io/badge/version-1.4.0-green)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.5.0-green)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 ## ✨ 特性
 
 - 🚀 **异步并发**: 支持多URL并发爬取,速度提升40-50%
 - 🌍 **智能翻译**: 自动识别英文内容并翻译为中文(DeepSeek API)
+- 💾 **本地持久化**: Redis + 文件混合存储,数据安全可靠
 - 🧠 **智能提取**: 使用 Trafilatura 精准提取文章核心内容,过滤广告
 - 🎭 **动态渲染**: 自动降级到 Playwright 处理 JavaScript 渲染页面
 - 🔄 **自动去重**: Redis 存储已爬取 URL,避免重复工作
@@ -20,6 +21,12 @@
 - 🎨 **友好界面**: 彩色日志、实时进度条、详细统计
 
 ## 📋 功能
+
+**V1.5 新增** 💾
+- ✅ Redis 本地持久化(混合存储模式)
+- ✅ 启动时自动数据恢复
+- ✅ 支持定期同步 Redis 到本地文件
+- ✅ 数据安全,防止 Redis 重启丢失
 
 **V1.4 新增** 🌍
 - ✅ 内容自动翻译(英文→中文)
@@ -246,6 +253,12 @@ MIN_DELAY=1               # 最小请求间隔
 MAX_DELAY=3               # 最大请求间隔
 MAX_RETRIES=3             # 最大重试次数
 
+# 本地持久化配置
+ENABLE_LOCAL_PERSISTENCE=true       # 启用本地持久化(默认: true)
+DEDUP_CACHE_FILE=data/dedup_cache.json    # 去重数据缓存路径
+COOKIE_CACHE_FILE=data/cookies_cache.json # Cookie 缓存路径
+SYNC_INTERVAL_SECONDS=300           # 定期同步间隔(秒, 0=禁用)
+
 # 翻译配置 (可选)
 ENABLE_TRANSLATION=false   # 启用翻译功能
 DEEPSEEK_API_KEY=          # DeepSeek API Key (https://platform.deepseek.com/)
@@ -262,6 +275,25 @@ TRANSLATE_METADATA=false   # 翻译元数据(作者等)
 DEBUG=false
 LOG_LEVEL=INFO
 ```
+
+### 本地持久化功能
+
+从 **V1.5** 开始,Creeper 支持 Redis 数据的本地持久化,确保数据不会因 Redis 重启而丢失:
+
+- **混合存储**: 每次操作同时写入 Redis 和本地文件
+- **自动恢复**: 启动时自动从本地文件恢复数据到 Redis
+- **数据安全**: Redis 故障时仍可从本地文件读取历史数据
+
+**工作原理**:
+1. 每次标记 URL 已爬取时,同时写入 Redis 和 `data/dedup_cache.json`
+2. 启动时检查 Redis,如果为空则从本地文件恢复数据
+3. 定期同步模式(可选): 按配置的间隔将 Redis 数据同步到文件
+
+**配置项**:
+- `ENABLE_LOCAL_PERSISTENCE`: 是否启用本地持久化(默认 `true`)
+- `DEDUP_CACHE_FILE`: 去重数据缓存文件路径
+- `COOKIE_CACHE_FILE`: Cookie 缓存文件路径(可选)
+- `SYNC_INTERVAL_SECONDS`: 定期同步间隔(秒, 设为 `0` 禁用定期同步)
 
 ### 翻译功能使用说明
 

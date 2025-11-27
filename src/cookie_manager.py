@@ -34,7 +34,7 @@ class CookieManager:
         Args:
             cookies_file: Cookie 存储文件路径 (file 模式使用)
             format: 存储格式 ('json' 或 'pickle')
-            storage_backend: 存储后端 ('file' 或 'redis')
+            storage_backend: 存储后端 ('file' 或 'redis' 或 'hybrid')
             redis_client: Redis 客户端实例 (redis 模式使用)
             redis_key_prefix: Redis Key 前缀
             expire_days: Cookie 过期天数 (redis 模式使用)
@@ -48,35 +48,47 @@ class CookieManager:
         self.cookies: Dict[str, List[dict]] = {}  # domain -> cookies
 
         # 根据存储后端初始化
-        if self.storage_backend == 'redis':
+        if self.storage_backend in ['redis', 'hybrid']:
             if not self.redis_client:
                 logger.warning("Redis 存储模式但未提供 redis_client,将无法使用 Redis 存储")
             else:
                 # 从 Redis 加载所有 Cookie
                 self._load_all_from_redis()
                 logger.info(f"已从 Redis 加载 Cookie,共 {len(self.cookies)} 个域")
-        elif self.storage_backend == 'file':
+
+        # 如果是文件或混合模式,尝试从文件加载
+        if self.storage_backend in ['file', 'hybrid']:
             # 如果指定了文件且文件存在,自动加载
             if self.cookies_file and self.cookies_file.exists():
                 self.load()
                 logger.info(f"已加载 Cookie 文件: {self.cookies_file}")
-        else:
+        elif self.storage_backend not in ['redis', 'hybrid']:
             logger.warning(f"未知的存储后端: {self.storage_backend},使用文件存储")
 
     def save(self, cookies_file: Optional[str] = None) -> bool:
         """
-        保存 Cookies
+        保存 Cookies (支持混合存储,同时保存到 Redis 和文件)
 
         Args:
             cookies_file: Cookie 存储文件路径(可选,file 模式使用)
 
         Returns:
-            bool: 是否保存成功
+            bool: 是否保存成功 (至少一个存储后端成功即为成功)
         """
-        if self.storage_backend == 'redis':
-            return self._save_all_to_redis()
-        else:
-            return self._save_to_file(cookies_file)
+        redis_success = False
+        file_success = False
+
+        # 如果启用本地持久化或是文件/混合模式,保存到文件
+        from .config import config
+        if config.ENABLE_LOCAL_PERSISTENCE or self.storage_backend in ['file', 'hybrid']:
+            file_success = self._save_to_file(cookies_file)
+
+        # 如果是 Redis 或混合模式,保存到 Redis
+        if self.storage_backend in ['redis', 'hybrid']:
+            redis_success = self._save_all_to_redis()
+
+        # 至少一个成功即为成功
+        return redis_success or file_success
 
     def _save_to_file(self, cookies_file: Optional[str] = None) -> bool:
         """
@@ -235,7 +247,7 @@ class CookieManager:
 
     def set_cookies(self, domain: str, cookies: List[dict]):
         """
-        设置指定域的 Cookies
+        设置指定域的 Cookies,支持自动持久化
 
         Args:
             domain: 域名(如 'example.com')
@@ -243,6 +255,11 @@ class CookieManager:
         """
         self.cookies[domain] = cookies
         logger.debug(f"已设置 {domain} 的 {len(cookies)} 个 Cookie")
+
+        # 如果启用本地持久化,立即保存到 Redis (如果使用 Redis 模式)
+        from .config import config
+        if config.ENABLE_LOCAL_PERSISTENCE and self.storage_backend in ['redis', 'hybrid']:
+            self._save_to_redis(domain, cookies)
 
     def get_cookies(self, domain: str) -> List[dict]:
         """

@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.5.0] - 2025-11-27
+
+### Added
+- 💾 **本地持久化**: Redis 数据本地持久化功能 - 混合存储模式
+  - 支持 Redis + 本地文件双写,确保数据不丢失
+  - 每次操作同时写入 Redis 和 `data/dedup_cache.json`
+  - 启动时自动从 JSON 文件恢复去重和 Cookie 数据
+  - 支持定期同步 Redis 数据到本地 (可配置间隔)
+  - 新增配置: `ENABLE_LOCAL_PERSISTENCE`, `DEDUP_CACHE_FILE`, `SYNC_INTERVAL_SECONDS`
+  - 相关文件: `src/dedup.py`, `src/cookie_manager.py`, `src/config.py`
+- 🧹 **清理脚本增强**: `clean.sh` 新增清理本地缓存文件功能
+  - 自动删除 `data/dedup_cache.json` 和 `data/cookies_cache.json`
+
 ## [1.4.3] - 2025-11-26
 
 ### Fixed

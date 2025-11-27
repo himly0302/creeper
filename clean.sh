@@ -21,6 +21,7 @@ echo -e "${YELLOW}⚠️  警告: 此操作将清空以下内容:${NC}"
 echo "  1. Redis 中所有 'creeper:' 开头的键"
 echo "  2. output/ 目录下的所有文件"
 echo "  3. creeper.log 日志文件"
+echo "  4. data/ 目录下的本地缓存文件"
 echo ""
 read -p "确认继续? (y/N): " -n 1 -r
 echo ""
@@ -102,6 +103,24 @@ if [ "$FAILED_COUNT" -gt 0 ]; then
     echo -e "${GREEN}✓ 已删除 $FAILED_COUNT 个失败记录文件${NC}"
 else
     echo -e "${GREEN}✓ 没有失败记录文件${NC}"
+fi
+echo ""
+
+# 5. 删除本地缓存文件
+echo "🗑️  删除本地缓存文件..."
+CACHE_COUNT=0
+if [ -f "data/dedup_cache.json" ]; then
+    rm -f data/dedup_cache.json
+    CACHE_COUNT=$((CACHE_COUNT + 1))
+fi
+if [ -f "data/cookies_cache.json" ]; then
+    rm -f data/cookies_cache.json
+    CACHE_COUNT=$((CACHE_COUNT + 1))
+fi
+if [ "$CACHE_COUNT" -gt 0 ]; then
+    echo -e "${GREEN}✓ 已删除 $CACHE_COUNT 个本地缓存文件${NC}"
+else
+    echo -e "${GREEN}✓ 没有本地缓存文件${NC}"
 fi
 echo ""
 
