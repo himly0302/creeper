@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.6.4] - 2025-11-27
+
+### Added
+- 📝 **文件整合**: 新增技术教程文档专用整合提示词
+  - 新增 `prompts/tutorial_merge.txt` 模板，专门用于技术教程、官网文档整合
+  - 5 级优先级体系：操作步骤 > 配置说明 > 故障排查 > 高级用法 > 概念背景
+  - 15+ 次强调"禁止精简内容"，要求保留 60-80% 源文档长度
+  - 明确要求 100% 保留所有命令、代码示例、操作步骤
+  - 8 项质量检查清单（含输出长度检查）
+  - 相关文件：`prompts/tutorial_merge.txt`
+
+### Changed
+- 🧹 **清理脚本**: 增强 clean.sh 清理功能
+  - 新增 `aggregators/` 目录的清理（删除所有聚合生成的文件）
+  - 新增 `data/aggregator_cache.json` 的清理（聚合器缓存文件）
+  - 更新清理步骤编号和提示信息
+  - 相关文件：`clean.sh`
+
 ## [1.6.3] - 2025-11-27
 
 ### Fixed

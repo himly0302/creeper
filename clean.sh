@@ -20,8 +20,9 @@ NC='\033[0m' # No Color
 echo -e "${YELLOW}⚠️  警告: 此操作将清空以下内容:${NC}"
 echo "  1. Redis 中所有 'creeper:' 开头的键"
 echo "  2. output/ 目录下的所有文件"
-echo "  3. creeper.log 日志文件"
-echo "  4. data/ 目录下的本地缓存文件"
+echo "  3. aggregators/ 目录下的所有聚合文件"
+echo "  4. creeper.log 日志文件"
+echo "  5. data/ 目录下的本地缓存文件"
 echo ""
 read -p "确认继续? (y/N): " -n 1 -r
 echo ""
@@ -84,7 +85,18 @@ else
 fi
 echo ""
 
-# 3. 删除日志文件
+# 3. 删除聚合文件目录
+echo "🗑️  删除聚合文件..."
+if [ -d "aggregators" ]; then
+    FILE_COUNT=$(find aggregators -type f | wc -l)
+    rm -rf aggregators/*
+    echo -e "${GREEN}✓ 已删除 aggregators/ 目录下的 $FILE_COUNT 个文件${NC}"
+else
+    echo -e "${GREEN}✓ aggregators/ 目录不存在,跳过${NC}"
+fi
+echo ""
+
+# 4. 删除日志文件
 echo "🗑️  删除日志文件..."
 if [ -f "creeper.log" ]; then
     LOG_SIZE=$(du -h creeper.log | cut -f1)
@@ -95,7 +107,7 @@ else
 fi
 echo ""
 
-# 4. 删除测试输出的失败记录
+# 5. 删除测试输出的失败记录
 echo "🗑️  删除失败 URL 记录..."
 FAILED_COUNT=$(find output -name "failed_urls_*.txt" 2>/dev/null | wc -l)
 if [ "$FAILED_COUNT" -gt 0 ]; then
@@ -106,7 +118,7 @@ else
 fi
 echo ""
 
-# 5. 删除本地缓存文件
+# 6. 删除本地缓存文件
 echo "🗑️  删除本地缓存文件..."
 CACHE_COUNT=0
 if [ -f "data/dedup_cache.json" ]; then
@@ -115,6 +127,10 @@ if [ -f "data/dedup_cache.json" ]; then
 fi
 if [ -f "data/cookies_cache.json" ]; then
     rm -f data/cookies_cache.json
+    CACHE_COUNT=$((CACHE_COUNT + 1))
+fi
+if [ -f "data/aggregator_cache.json" ]; then
+    rm -f data/aggregator_cache.json
     CACHE_COUNT=$((CACHE_COUNT + 1))
 fi
 if [ "$CACHE_COUNT" -gt 0 ]; then
