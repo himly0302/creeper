@@ -139,7 +139,8 @@ async def main():
             api_key=config.AGGREGATOR_API_KEY,
             base_url=config.AGGREGATOR_BASE_URL,
             model=config.AGGREGATOR_MODEL,
-            max_tokens=config.AGGREGATOR_MAX_TOKENS
+            max_tokens=config.AGGREGATOR_MAX_TOKENS,
+            temperature=config.AGGREGATOR_TEMPERATURE
         )
 
         # 加载提示词模板

@@ -50,7 +50,7 @@ AGGREGATOR_BASE_URL         # ✅ API Base URL
 AGGREGATOR_MODEL            # ✅ 模型名称
 AGGREGATOR_CONCURRENCY      # ✅ 并发数（默认 1）
 AGGREGATOR_PROMPTS_DIR      # ✅ 模板目录（默认 prompts）
-AGGREGATOR_MAX_TOKENS       # ✅ 最大 token 数（4000）
+AGGREGATOR_MAX_TOKENS       # ✅ 最大 token 数（64000）
 AGGREGATOR_MAX_FILE_SIZE    # ✅ 最大文件大小（1MB）
 ```
 

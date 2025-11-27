@@ -188,7 +188,7 @@ TRANSLATE_CONTENT=true
 AGGREGATOR_API_KEY=sk-your-aggregator-key-here
 AGGREGATOR_BASE_URL=https://api.deepseek.com
 AGGREGATOR_MODEL=deepseek-chat
-AGGREGATOR_MAX_TOKENS=4000
+AGGREGATOR_MAX_TOKENS=64000
 ```
 
 **注意**: 翻译和文件整合使用独立的 API 配置，可以使用不同的 Key 或服务商。

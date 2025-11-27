@@ -128,7 +128,7 @@ prompts/                         # 提示词模板目录
   # 新增配置项
   AGGREGATOR_CONCURRENCY = int(os.getenv('AGGREGATOR_CONCURRENCY', 1))
   AGGREGATOR_PROMPTS_DIR = os.getenv('AGGREGATOR_PROMPTS_DIR', 'prompts')
-  AGGREGATOR_MAX_TOKENS = int(os.getenv('AGGREGATOR_MAX_TOKENS', 4000))
+  AGGREGATOR_MAX_TOKENS = int(os.getenv('AGGREGATOR_MAX_TOKENS', 64000))
   AGGREGATOR_MODEL = os.getenv('AGGREGATOR_MODEL', 'deepseek-chat')
   ```
 - [ ] **更新 `.env.example`**:
@@ -136,7 +136,7 @@ prompts/                         # 提示词模板目录
   # 文件夹内容整合功能
   AGGREGATOR_CONCURRENCY=1           # LLM 调用并发数（建议 1 避免限流）
   AGGREGATOR_PROMPTS_DIR=prompts     # 提示词模板目录
-  AGGREGATOR_MAX_TOKENS=4000         # LLM 返回最大 token 数
+  AGGREGATOR_MAX_TOKENS=64000         # LLM 返回最大 token 数
   AGGREGATOR_MODEL=deepseek-chat     # LLM 模型名称
   ```
 - [ ] **创建默认提示词模板** (`prompts/code_summary.txt`):
@@ -267,7 +267,7 @@ python aggregator.py \
 # LLM 整合功能配置
 AGGREGATOR_CONCURRENCY=1           # 并发数（建议 1）
 AGGREGATOR_PROMPTS_DIR=prompts     # 模板目录
-AGGREGATOR_MAX_TOKENS=4000         # 最大 token 数
+AGGREGATOR_MAX_TOKENS=64000         # 最大 token 数
 AGGREGATOR_MODEL=deepseek-chat     # 模型名称
 
 # 复用现有配置
