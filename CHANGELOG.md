@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.6.3] - 2025-11-27
+
+### Fixed
+- 🎯 **文件整合**: 优化聚合提示词质量，修复输出格式和内容质量问题
+  - 代码总结提示词增强：深度分析架构设计、依赖关系、关键实现细节
+  - 文档合并提示词增强：保留核心信息、智能去重、结构化输出
+  - 修复 LLM 输出被 markdown 代码块包裹的问题（禁止 ` ```markdown ` 包裹）
+  - 修复 LLM 臆造不存在文件路径的问题（强制使用实际文件路径）
+  - 新增函数签名提取、输入输出说明、异常处理分析
+  - 新增架构概览、技术栈详情、使用示例等结构化内容
+  - 相关文件：`prompts/code_summary.txt`, `prompts/doc_merge.txt`
+
 ## [1.6.2] - 2025-11-27
 
 ### Fixed
