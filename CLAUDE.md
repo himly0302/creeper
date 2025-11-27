@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-Creeper 是一个网页爬虫工具，从 Markdown 文件中提取 URL 并保存为结构化的本地 Markdown 文档。支持同步和异步两种爬取模式，基于 Redis 的去重机制，可选的内容翻译功能。V1.6 新增文件夹内容 LLM 整合功能。
+Creeper 是一个网页爬虫工具，从 Markdown 文件中提取 URL 并保存为结构化的本地 Markdown 文档。支持同步和异步两种爬取模式，基于 Redis 的去重机制，可选的内容翻译功能。V1.6 新增文件夹内容 LLM 整合功能，V1.7 新增图片本地化存储功能。
 
-**当前版本**: v1.6.0
+**当前版本**: v1.7.0
 
 ## 开发命令
 
@@ -42,6 +42,9 @@ python creeper.py input.md --force
 
 # 交互式登录（用于需要认证的网站）
 python creeper.py --login-url https://example.com/login
+
+# 启用图片下载
+DOWNLOAD_IMAGES=true python creeper.py input.md
 ```
 
 ### 运行文件整合 (V1.6 新增)
@@ -110,6 +113,11 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 - `translator.py`: 可选的英文→中文翻译（DeepSeek API）
 - `cookie_manager.py`: Cookie 管理（Redis 或文件存储），用于需要登录的网站
 - `interactive_login.py`: 浏览器手动登录，自动提取 Cookie
+- `image_downloader.py`: 图片下载器（同步和异步版本）
+  - 从 Markdown 提取图片 URL
+  - 下载图片到 `images/` 子目录
+  - 替换 URL 为相对路径
+  - 图片去重和安全验证（SSRF 防护）
 
 ### 关键设计模式
 
@@ -137,6 +145,9 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 - `ENABLE_LOCAL_PERSISTENCE`: Redis 备份到本地文件（默认: true）
 - `ENABLE_TRANSLATION`: 自动翻译英文内容（默认: false，需要 DeepSeek API key）
 - `COOKIE_STORAGE`: `redis`（默认）或 `file`
+- `DOWNLOAD_IMAGES`: 启用图片下载（默认: false）（V1.7 新增）
+- `MAX_IMAGE_SIZE_MB`: 最大图片大小限制（默认: 10 MB）（V1.7 新增）
+- `IMAGE_DOWNLOAD_TIMEOUT`: 图片下载超时时间（默认: 30 秒）（V1.7 新增）
 - `AGGREGATOR_*`: 文件整合功能配置（V1.6 新增）
 
 ## 项目结构约定
@@ -145,6 +156,7 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 - `tests/`: 所有测试文件（命名规范: `test_*.py`）
 - `data/`: 本地持久化缓存文件
 - `output/`: 生成的 Markdown 文件（镜像输入的 H1/H2 层级）
+- `output/<H1>/<H2>/images/`: 下载的图片文件（如果启用图片下载）（V1.7 新增）
 - `docs/`: 需求和设计文档
 - `prompts/`: 提示词模板目录（用于文件夹内容整合功能，V1.6 新增）
 - `docs/features/`: 功能需求文档（V1.6 新增）

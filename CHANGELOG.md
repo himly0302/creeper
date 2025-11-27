@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.7.0] - 2025-11-27
+
+### Added
+- 📷 **图片本地化存储**: 自动下载 Markdown 中的图片到本地，替换为相对路径
+  - 支持同步和异步下载模式（兼容现有同步/异步爬虫）
+  - 图片保存到 `output/<H1>/<H2>/images/` 目录
+  - 支持图片格式：JPG, PNG, GIF, WebP, SVG
+  - 图片去重机制（相同 URL 只下载一次）
+  - 下载失败时保留原始 URL（不影响文档生成）
+  - SSRF 防护：拒绝下载内网资源（localhost, 127.0.0.1, 192.168.*, 10.*, 172.*）
+  - 文件大小限制：默认最大 10 MB（可配置）
+  - 相关文件：`src/image_downloader.py`, `src/storage.py`, `src/config.py`
+  - 新增配置：`DOWNLOAD_IMAGES`, `MAX_IMAGE_SIZE_MB`, `IMAGE_DOWNLOAD_TIMEOUT`
+  - 测试文件：`tests/image_downloader/test_sync_downloader.py`, `tests/image_downloader/test_async_downloader.py`
+
 ## [1.6.4] - 2025-11-27
 
 ### Added

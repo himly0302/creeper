@@ -3,12 +3,13 @@
 > 智能网页爬虫工具，支持 Markdown URL 批量爬取、LLM 内容整合、自动翻译等功能。
 
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
-[![Version](https://img.shields.io/badge/version-1.6.1-green)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.7.0-green)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 ## ✨ 核心特性
 
 - 🚀 **异步并发爬取** - 支持多 URL 并发，速度提升 40-50%
+- 📷 **图片本地化存储** - 自动下载网页中的图片到本地，生成离线可用的文档
 - 🧩 **LLM 文件整合** - 智能扫描文件夹，使用 LLM 生成代码总结/文档合并
 - 🌍 **智能翻译** - 自动识别英文内容并翻译为中文（DeepSeek API）
 - 💾 **混合持久化** - Redis + 本地文件双写，数据安全可靠
@@ -63,6 +64,9 @@ python creeper.py input.md --sync
 
 # 自定义并发数
 python creeper.py input.md -c 10
+
+# 启用图片下载（将图片保存到本地）
+DOWNLOAD_IMAGES=true python creeper.py input.md
 
 # 启用翻译（需配置 DEEPSEEK_API_KEY）
 python creeper.py input.md  # 在 .env 中设置 ENABLE_TRANSLATION=true
@@ -182,6 +186,15 @@ DEEPSEEK_MODEL=deepseek-chat
 TRANSLATE_TITLE=true
 TRANSLATE_CONTENT=true
 ```
+
+### 图片下载配置
+```bash
+DOWNLOAD_IMAGES=false           # 启用/禁用图片下载（默认 false）
+MAX_IMAGE_SIZE_MB=10            # 最大图片大小限制（MB，默认 10）
+IMAGE_DOWNLOAD_TIMEOUT=30       # 图片下载超时时间（秒，默认 30）
+```
+
+**说明**：启用后，爬取的网页中的图片会被下载到 `output/<H1>/<H2>/images/` 目录，Markdown 中的图片链接会替换为本地相对路径。
 
 ### 文件整合配置 (独立 API)
 ```bash

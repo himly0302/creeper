@@ -53,6 +53,12 @@ class Config:
     MAX_FILENAME_LENGTH = int(os.getenv('MAX_FILENAME_LENGTH', 100))
     SAVE_FAILED_URLS = os.getenv('SAVE_FAILED_URLS', 'true').lower() == 'true'
 
+    # 图片下载配置
+    DOWNLOAD_IMAGES = os.getenv('DOWNLOAD_IMAGES', 'false').lower() == 'true'
+    MAX_IMAGE_SIZE_MB = int(os.getenv('MAX_IMAGE_SIZE_MB', 10))
+    IMAGE_DOWNLOAD_TIMEOUT = int(os.getenv('IMAGE_DOWNLOAD_TIMEOUT', 30))
+    SUPPORTED_IMAGE_FORMATS = os.getenv('SUPPORTED_IMAGE_FORMATS', '.jpg,.jpeg,.png,.gif,.webp,.svg')
+
     # Cookie 配置
     COOKIE_STORAGE = os.getenv('COOKIE_STORAGE', 'redis')  # 'file' 或 'redis'
     COOKIE_EXPIRE_DAYS = int(os.getenv('COOKIE_EXPIRE_DAYS', 7))  # Cookie 过期天数

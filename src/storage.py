@@ -11,6 +11,7 @@ from .parser import URLItem
 from .cleaner import ContentCleaner
 from .config import config
 from .utils import setup_logger, sanitize_filename, ensure_dir, get_timestamp
+from .image_downloader import ImageDownloader
 
 logger = setup_logger(__name__)
 
@@ -51,7 +52,7 @@ class StorageManager:
             file_path = h2_dir / filename
 
             # 生成 Markdown 内容
-            markdown_content = self._generate_markdown(item, page)
+            markdown_content = self._generate_markdown(item, page, h2_dir)
 
             # 写入文件
             with open(file_path, 'w', encoding='utf-8') as f:
@@ -64,13 +65,14 @@ class StorageManager:
             logger.error(f"保存文件失败: {e}")
             return None
 
-    def _generate_markdown(self, item: URLItem, page: WebPage) -> str:
+    def _generate_markdown(self, item: URLItem, page: WebPage, h2_dir: Path) -> str:
         """
         生成 Markdown 文件内容
 
         Args:
             item: URL 项目
             page: 网页数据
+            h2_dir: H2 级目录路径（用于保存图片）
 
         Returns:
             Markdown 格式的文件内容
@@ -78,6 +80,17 @@ class StorageManager:
         # 清洗内容
         content = ContentCleaner.clean(page.content)
         description = ContentCleaner.truncate_description(page.description, 300)
+
+        # 处理图片下载（如果启用）
+        if config.DOWNLOAD_IMAGES:
+            try:
+                logger.debug("图片下载功能已启用，开始处理图片...")
+                downloader = ImageDownloader(base_url=page.url)
+                images_dir = h2_dir / "images"
+                content = downloader.process_markdown(content, images_dir)
+                downloader.close()
+            except Exception as e:
+                logger.warning(f"⚠ 图片下载处理失败，将使用原始内容: {e}")
 
         # 构建 Markdown
         lines = []
