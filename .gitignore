@@ -36,9 +36,10 @@ logs/
 creeper.log
 
 # 输出目录
-output/
+outputs/
 data/
 aggregators/
+parsers/
 
 # IDE 配置
 .vscode/

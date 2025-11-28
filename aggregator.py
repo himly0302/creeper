@@ -35,17 +35,25 @@ async def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
-  # 代码总结
+  # 代码总结（使用 aggregator/ 目录下的模板，推荐）
+  python3 aggregator.py --folder ./src --output ./docs/code_summary.md --template aggregator/code_summary
+
+  # 文档合并（使用 aggregator/ 目录下的模板）
+  python3 aggregator.py --folder ./docs --output ./merged.md --template aggregator/tutorial_merge --extensions .md,.txt
+
+  # 数据分析（使用 aggregator/ 目录下的模板）
+  python3 aggregator.py --folder ./data --output ./analysis.md --template aggregator/code_summary --force
+
+  # 简化模板名称（自动在子目录中搜索）
   python3 aggregator.py --folder ./src --output ./docs/code_summary.md --template code_summary
-
-  # 文档合并
-  python3 aggregator.py --folder ./docs --output ./merged.md --template doc_merge --extensions .md,.txt
-
-  # 数据分析
-  python3 aggregator.py --folder ./data --output ./analysis.md --template data_analysis --force
 
   # 自定义文件类型
   python3 aggregator.py --folder ./config --output ./config_summary.md --template code_summary --extensions .json,.yaml,.toml
+
+注意:
+  - 推荐使用 aggregator/ 目录下的模板（适合多对一文件整合）
+  - parser/ 目录下的模板适合文件解析（一对一），不推荐在 aggregator.py 中使用
+  - 模板路径支持简化写法（如 'code_summary'）或完整路径（如 'aggregator/code_summary'）
         """
     )
 

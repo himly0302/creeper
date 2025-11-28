@@ -36,20 +36,31 @@ async def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
-  # 代码分析（解析所有 Python 文件）
-  python parser.py --input-folder ./src --output-folder ./output/parsed --template code_analysis
+  # 代码分析（使用 parser/ 目录下的模板，推荐）
+  python parser.py --input-folder ./src --output-folder ./output/parsed --template parser/code_parser
 
-  # 文档总结（解析所有 Markdown 文件）
-  python parser.py --input-folder ./docs --output-folder ./output/summaries --template doc_summary --extensions .md
+  # 文档总结（使用 parser/ 目录下的模板）
+  python parser.py --input-folder ./docs --output-folder ./output/summaries --template parser/doc_parser --extensions .md
+
+  # 配置文件分析（使用 parser/ 目录下的模板）
+  python parser.py --input-folder ./config --output-folder ./output/configs --template parser/config_parser --extensions .json,.yaml,.toml
+
+  # 简化模板名称（自动在子目录中搜索）
+  python parser.py --input-folder ./src --output-folder ./output/parsed --template code_parser
 
   # 强制重新处理所有文件
-  python parser.py --input-folder ./src --output-folder ./output/parsed --template code_analysis --force
+  python parser.py --input-folder ./src --output-folder ./output/parsed --template parser/code_parser --force
 
   # 自定义并发数
-  python parser.py --input-folder ./src --output-folder ./output/parsed --template code_analysis --concurrency 10
+  python parser.py --input-folder ./src --output-folder ./output/parsed --template parser/code_parser --concurrency 10
 
   # 调试模式
-  python parser.py --input-folder ./src --output-folder ./output/parsed --template code_analysis --debug
+  python parser.py --input-folder ./src --output-folder ./output/parsed --template parser/code_parser --debug
+
+注意:
+  - 推荐使用 parser/ 目录下的模板（适合一对一文件解析）
+  - aggregator/ 目录下的模板适合文件整合（多对一），不推荐在 parser.py 中使用
+  - 模板路径支持简化写法（如 'code_parser'）或完整路径（如 'parser/code_parser'）
         """
     )
 

@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-Creeper 是一个网页爬虫工具，从 Markdown 文件中提取 URL 并保存为结构化的本地 Markdown 文档。支持同步和异步两种爬取模式，基于 Redis 的去重机制，可选的内容翻译功能。V1.6 新增文件夹内容 LLM 整合功能，V1.7 新增图片本地化存储功能，V1.8 新增文件解析功能。
+Creeper 是一个网页爬虫工具，从 Markdown 文件中提取 URL 并保存为结构化的本地 Markdown 文档。支持同步和异步两种爬取模式，基于 Redis 的去重机制，可选的内容翻译功能。V1.6 新增文件夹内容 LLM 整合功能，V1.7 新增图片本地化存储功能，V1.8 新增文件解析功能，V1.9 重构提示词模板组织结构。
 
-**当前版本**: v1.8.0
+**当前版本**: v1.9.0
 
 ## 开发命令
 
@@ -49,38 +49,38 @@ DOWNLOAD_IMAGES=true python creeper.py input.md
 
 ### 运行文件整合 (V1.6 新增)
 ```bash
-# 代码总结
-python3 aggregator.py --folder ./src --output ./docs/code_summary.md --template code_summary
+# 代码总结（推荐使用 aggregator/ 目录下的模板）
+python3 aggregator.py --folder ./src --output ./docs/code_summary.md --template aggregator/code_summary
 
 # 文档合并
-python3 aggregator.py --folder ./docs --output ./merged.md --template doc_merge --extensions .md,.txt
+python3 aggregator.py --folder ./docs --output ./merged.md --template aggregator/tutorial_merge --extensions .md,.txt
 
 # 列出可用模板
 python3 aggregator.py --list-templates
 
 # 强制重新处理所有文件
-python3 aggregator.py --folder ./src --output ./docs/code_summary.md --template code_summary --force
+python3 aggregator.py --folder ./src --output ./docs/code_summary.md --template aggregator/code_summary --force
 ```
 
 ### 运行文件解析 (V1.8 新增)
 ```bash
-# 解析文件夹中的所有文件（一对一输出）
-python parser.py --input-folder ./src --output-folder ./output/parsed --template file_parser
+# 解析文件夹中的所有文件（一对一输出，推荐使用 parser/ 目录下的模板）
+python parser.py --input-folder ./src --output-folder ./output/parsed --template parser/code_parser
 
 # 仅解析特定类型的文件
-python parser.py --input-folder ./docs --output-folder ./output/summaries --template file_parser --extensions .md,.txt
+python parser.py --input-folder ./docs --output-folder ./output/summaries --template parser/doc_parser --extensions .md,.txt
 
 # 列出可用模板
 python parser.py --list-templates
 
 # 强制重新处理所有文件（忽略缓存）
-python parser.py --input-folder ./src --output-folder ./output/parsed --template file_parser --force
+python parser.py --input-folder ./src --output-folder ./output/parsed --template parser/code_parser --force
 
 # 自定义并发数
-python parser.py --input-folder ./src --output-folder ./output/parsed --template file_parser --concurrency 10
+python parser.py --input-folder ./src --output-folder ./output/parsed --template parser/code_parser --concurrency 10
 
 # 调试模式
-python parser.py --input-folder ./src --output-folder ./output/parsed --template file_parser --debug
+python parser.py --input-folder ./src --output-folder ./output/parsed --template parser/code_parser --debug
 ```
 
 ### 测试
@@ -193,6 +193,8 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 - `output/<H1>/<H2>/images/`: 下载的图片文件（如果启用图片下载）（V1.7 新增）
 - `docs/`: 需求和设计文档
 - `prompts/`: 提示词模板目录（用于文件夹内容整合和解析功能）
+  - `prompts/parser/`: 文件解析类模板（一对一输出）
+  - `prompts/aggregator/`: 文件整合类模板（多对一输出）
 - `docs/features/`: 功能需求文档（V1.6 新增）
 
 ## 重要实现细节
@@ -225,10 +227,18 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 
 **添加翻译语言对**: 修改 `translator.py`，更新 langdetect 逻辑
 
-**添加新的提示词模板** (V1.6 新增): 在 `prompts/` 创建 `.txt` 文件，通过 `--template` 参数使用
-- 模板内容使用中文编写，清晰描述任务和输出要求
-- 建议在模板中包含"如果提供了已有内容,请将新信息整合进去"的增量更新逻辑
-- 文件名使用 snake_case 命名（如 `code_summary.txt`）
+**添加新的提示词模板** (V1.6 新增，V1.9 更新):
+- **模板类型选择**：
+  - 文件解析模板：在 `prompts/parser/` 创建 `.txt` 文件（一对一输出，单个文件分析）
+  - 文件整合模板：在 `prompts/aggregator/` 创建 `.txt` 文件（多对一输出，整合所有文件）
+- **命名规范**：文件名使用 snake_case 命名（如 `code_parser.txt`）
+- **内容编写**：
+  - 模板内容使用中文编写，清晰描述任务和输出要求
+  - 解析模板：禁止包含"整合已有内容"、"合并信息"等增量更新逻辑
+  - 整合模板：建议包含"如果提供了已有内容,请将新信息整合进去"的增量更新逻辑
+- **使用方式**：
+  - 完整路径：`--template parser/code_parser` 或 `--template aggregator/code_summary`
+  - 简化路径：`--template code_parser`（自动在子目录中搜索，如有重名优先使用第一个）
 
 ## Git 提交规范
 

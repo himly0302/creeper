@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.9.0] - 2025-11-28
+
+### Changed
+- 📂 **提示词模板组织**: 重构 prompts 目录结构，区分解析和整合类模板
+  - 新增 `prompts/parser/` 目录：存放文件解析类提示词（一对一输出）
+  - 新增 `prompts/aggregator/` 目录：存放文件整合类提示词（多对一输出）
+  - 移动现有 8 个整合模板到 `prompts/aggregator/`
+  - 相关文件：`src/prompt_templates.py`, `parser.py`, `aggregator.py`
+
+### Added
+- 🆕 **文件解析模板**: 新增 3 个专用文件解析提示词模板
+  - `prompts/parser/code_parser.txt`：代码文件解析（深度分析单个文件）
+  - `prompts/parser/doc_parser.txt`：文档文件解析（结构化提取文档要点）
+  - `prompts/parser/config_parser.txt`：配置文件解析（解析配置项和示例）
+- 🔍 **模板查找增强**: `PromptTemplateManager` 支持递归扫描子目录
+  - 支持简化路径：`--template code_parser`（自动在子目录中搜索）
+  - 支持完整路径：`--template parser/code_parser`（精确匹配）
+  - `--list-templates` 现在显示带子目录的完整路径（如 `parser/code_parser`）
+  - 完全向后兼容，旧模板路径仍然可用
+
+### Technical Details
+- `PromptTemplateManager.list_templates()` 使用 `rglob()` 递归搜索所有 `.txt` 文件
+- `PromptTemplateManager.get_template()` 优先尝试直接路径，失败后在子目录中搜索
+- 模板路径格式：`subdir/template_name` 或 `template_name`（不含 `.txt` 扩展名）
+
 ## [1.8.0] - 2025-11-28
 
 ### Added
