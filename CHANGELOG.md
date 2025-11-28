@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.9.1] - 2025-11-28
+
+### Added
+- 🆕 **题材类文件解析模板**: 新增 6 个专门用于文件解析的题材类提示词模板
+  - `prompts/parser/humanities_parser.txt`：人文艺术内容分析（文化评论、哲学思考、社会观察）
+  - `prompts/parser/practical_parser.txt`：实用指南提取（生活技巧、工作方法、学习技能）
+  - `prompts/parser/local_parser.txt`：本地资讯分析（城市资讯、社区动态、民生服务）
+  - `prompts/parser/history_parser.txt`：历史内容分析（历史事件、人物传记、历史研究）
+  - `prompts/parser/international_parser.txt`：国际资讯分析（全球事件、外交关系、跨国议题）
+  - `prompts/parser/entertainment_parser.txt`：娱乐资讯分析（影视音乐、游戏综艺、明星动态）
+- 📊 **模板总数**: 现在共有 17 个提示词模板（8个整合类 + 9个解析类）
+
+### Technical Details
+- 所有题材类解析模板都遵循"一对一"原则（单篇文章分析）
+- 禁止整合逻辑，不包含"合并已有内容"等语句
+- 保持题材特色，提取各题材的核心关注点
+
 ## [1.9.0] - 2025-11-28
 
 ### Changed
