@@ -42,7 +42,7 @@ cp .env.example .env
 
 ### 基础使用 - 网页爬虫
 
-**1. 准备输入文件** (input.md):
+**1. 准备输入文件** (inputs/input.md):
 ```markdown
 # 技术学习资料
 
@@ -57,23 +57,23 @@ https://developer.mozilla.org/zh-CN/docs/Web
 **2. 运行爬虫**:
 ```bash
 # 异步模式（推荐）
-python creeper.py input.md
+python creeper.py inputs/input.md
 
 # 同步模式
-python creeper.py input.md --sync
+python creeper.py inputs/input.md --sync
 
 # 自定义并发数
-python creeper.py input.md -c 10
+python creeper.py inputs/input.md -c 10
 
 # 启用图片下载（将图片保存到本地）
-DOWNLOAD_IMAGES=true python creeper.py input.md
+DOWNLOAD_IMAGES=true python creeper.py inputs/input.md
 
 # 启用翻译（需配置 DEEPSEEK_API_KEY）
-python creeper.py input.md  # 在 .env 中设置 ENABLE_TRANSLATION=true
+python creeper.py inputs/input.md  # 在 .env 中设置 ENABLE_TRANSLATION=true
 ```
 
 **3. 查看输出**:
-生成的 Markdown 文档保存在 `output/` 目录，按 H1/H2 层级组织。
+生成的 Markdown 文档保存在 `output/` 目录（约定名称为 `outputs/`），按 H1/H2 层级组织。
 
 ### 文件整合使用 (V1.6 新功能)
 
@@ -86,16 +86,16 @@ python creeper.py input.md  # 在 .env 中设置 ENABLE_TRANSLATION=true
 # 2. 查看可用模板
 python3 aggregator.py --list-templates
 
-# 3. 生成代码总结
+# 3. 生成代码总结（输出到 aggregators/ 目录）
 python3 aggregator.py \
   --folder ./src \
-  --output ./docs/code_summary.md \
+  --output ./aggregators/code_summary.md \
   --template code_summary
 
 # 4. 合并文档
 python3 aggregator.py \
   --folder ./docs \
-  --output ./merged.md \
+  --output ./aggregators/merged.md \
   --template doc_merge \
   --extensions .md,.txt
 ```
@@ -349,7 +349,7 @@ ls prompts/
 
 # 或手动清理
 redis-cli -n 1 KEYS "creeper:*" | xargs redis-cli -n 1 DEL
-rm -rf output/*
+rm -rf output/* outputs/* parsers/* aggregators/* data/*.json
 rm -f creeper.log
 ```
 

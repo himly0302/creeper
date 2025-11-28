@@ -22,6 +22,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - 场景 1 使用 `inputs/` 存放输入文件
   - 场景 3 使用 `aggregators/` 存放整合文档
   - 场景 4 使用 `parsers/` 存放解析文档
+- 🔧 **命令行示例更新**: 所有文档中的命令行示例更新为使用约定目录结构
+  - 爬虫命令: `python creeper.py inputs/input.md`
+  - 整合命令: `--output ./aggregators/code_summary.md`
+  - 解析命令: `--input-folder ./inputs/编程 --output-folder ./parsers/编程分析`
+  - 清理命令: `rm -rf output/* outputs/* parsers/* aggregators/* data/*.json`
 
 ## [1.9.1] - 2025-11-28
 

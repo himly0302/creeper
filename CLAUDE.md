@@ -26,61 +26,61 @@ playwright install chromium
 ### 运行爬虫
 ```bash
 # 异步模式（默认，推荐）
-python creeper.py input.md
+python creeper.py inputs/input.md
 
 # 同步模式
-python creeper.py input.md --sync
+python creeper.py inputs/input.md --sync
 
 # 自定义并发数
-python creeper.py input.md -c 10
+python creeper.py inputs/input.md -c 10
 
 # 调试模式
-python creeper.py input.md --debug
+python creeper.py inputs/input.md --debug
 
 # 强制重新爬取（跳过去重）
-python creeper.py input.md --force
+python creeper.py inputs/input.md --force
 
 # 交互式登录（用于需要认证的网站）
 python creeper.py --login-url https://example.com/login
 
 # 启用图片下载
-DOWNLOAD_IMAGES=true python creeper.py input.md
+DOWNLOAD_IMAGES=true python creeper.py inputs/input.md
 ```
 
 ### 运行文件整合 (V1.6 新增)
 ```bash
 # 代码总结（推荐使用 aggregator/ 目录下的模板）
-python3 aggregator.py --folder ./src --output ./docs/code_summary.md --template aggregator/code_summary
+python3 aggregator.py --folder ./src --output ./aggregators/code_summary.md --template aggregator/code_summary
 
 # 文档合并
-python3 aggregator.py --folder ./docs --output ./merged.md --template aggregator/tutorial_merge --extensions .md,.txt
+python3 aggregator.py --folder ./docs --output ./aggregators/merged.md --template aggregator/tutorial_merge --extensions .md,.txt
 
 # 列出可用模板
 python3 aggregator.py --list-templates
 
 # 强制重新处理所有文件
-python3 aggregator.py --folder ./src --output ./docs/code_summary.md --template aggregator/code_summary --force
+python3 aggregator.py --folder ./src --output ./aggregators/code_summary.md --template aggregator/code_summary --force
 ```
 
 ### 运行文件解析 (V1.8 新增)
 ```bash
 # 解析文件夹中的所有文件（一对一输出，推荐使用 parser/ 目录下的模板）
-python parser.py --input-folder ./src --output-folder ./output/parsed --template parser/code_parser
+python parser.py --input-folder ./inputs/编程 --output-folder ./parsers/编程分析 --template parser/code_parser
 
 # 仅解析特定类型的文件
-python parser.py --input-folder ./docs --output-folder ./output/summaries --template parser/doc_parser --extensions .md,.txt
+python parser.py --input-folder ./inputs/国际 --output-folder ./parsers/国际分析 --template parser/doc_parser --extensions .md,.txt
 
 # 列出可用模板
 python parser.py --list-templates
 
 # 强制重新处理所有文件（忽略缓存）
-python parser.py --input-folder ./src --output-folder ./output/parsed --template parser/code_parser --force
+python parser.py --input-folder ./inputs/编程 --output-folder ./parsers/编程分析 --template parser/code_parser --force
 
 # 自定义并发数
-python parser.py --input-folder ./src --output-folder ./output/parsed --template parser/code_parser --concurrency 10
+python parser.py --input-folder ./inputs/编程 --output-folder ./parsers/编程分析 --template parser/code_parser --concurrency 10
 
 # 调试模式
-python parser.py --input-folder ./src --output-folder ./output/parsed --template parser/code_parser --debug
+python parser.py --input-folder ./inputs/编程 --output-folder ./parsers/编程分析 --template parser/code_parser --debug
 ```
 
 ### 测试
@@ -102,7 +102,7 @@ pytest tests/file_aggregator/
 
 # 手动清理
 redis-cli -n 1 KEYS "creeper:*" | xargs redis-cli -n 1 DEL
-rm -rf output/*
+rm -rf output/* outputs/* parsers/* aggregators/* data/*.json
 rm -f creeper.log
 ```
 
