@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.8.0] - 2025-11-28
+
+### Added
+- 📄 **文件解析功能**: 支持文件夹批量解析，每个文件独立调用 LLM 处理并生成对应的输出文件
+  - 通过 Redis 实现增量更新，仅处理新增或变更的文件（文件级缓存）
+  - 支持自定义输出文件夹、提示词模板、文件扩展名过滤
+  - 保持输入文件夹的相对路径结构，输出扩展名统一为 `.md`
+  - 支持并发处理，默认并发数 5（可通过 `--concurrency` 调整）
+  - 混合存储模式：Redis + 本地 JSON（`data/parser_cache.json`），防止缓存丢失
+  - 相关文件：`src/file_parser.py`, `parser.py`, `prompts/file_parser.txt`
+  - 新增命令：`python parser.py --input-folder <path> --output-folder <path> --template <name>`
+  - 测试：`python parser.py --list-templates` 列出可用模板
+
+### Technical Details
+- 复用 `FileScanner` 进行文件扫描和哈希计算（MD5）
+- 采用混合存储模式（Redis + 本地 JSON），启动时自动恢复缓存
+- 支持异步并发处理，使用 `asyncio.Semaphore` 控制并发数
+- 路径遍历防护：使用 `os.path.abspath()` 规范化路径，检查输出路径是否在允许范围内
+- 缓存键格式：`creeper:parser:<md5(file_path)>`，存储文件哈希、解析时间、输出路径等元数据
+
 ## [1.7.0] - 2025-11-27
 
 ### Added

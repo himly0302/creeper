@@ -1,16 +1,17 @@
 # Creeper Redis 使用文档
 
-**版本**: v1.6.2
-**最后更新**: 2025-11-27
+**版本**: v1.8.0
+**最后更新**: 2025-11-28
 
 ---
 
 ## 概述
 
-Creeper 使用 Redis 作为核心缓存存储，支持三大功能模块：
+Creeper 使用 Redis 作为核心缓存存储，支持四大功能模块：
 1. **URL 去重**（`dedup.py`）- 避免重复爬取相同 URL
 2. **Cookie 管理**（`cookie_manager.py`）- 跨会话持久化登录状态
 3. **文件聚合缓存**（`file_aggregator.py`）- 增量更新文件整合结果
+4. **文件解析缓存**（`file_parser.py`）- 文件级增量解析（v1.8 新增）
 
 所有模块均支持**混合持久化**（Redis + 本地 JSON），确保数据不因 Redis 重启而丢失。
 
@@ -258,6 +259,72 @@ redis-cli -n 1 KEYS "creeper:aggregator:*" | xargs redis-cli -n 1 DEL
 
 ---
 
+### 2.4 文件解析缓存（file_parser.py）**v1.8 新增**
+
+**功能**: 记录已解析的文件，支持文件级增量更新
+
+#### Key 格式
+```
+creeper:parser:<file_path_md5>
+```
+
+- **Key 类型**: Hash
+- **Key 说明**: `<file_path_md5>` 是文件路径的 MD5 哈希
+- **过期时间**: 无（永久保存）
+
+#### Hash 字段
+
+| 字段 | 类型 | 说明 | 示例 |
+|------|------|------|------|
+| `path` | String | 文件绝对路径 | `/home/user/src/main.py` |
+| `hash` | String | 文件内容 MD5 哈希 | `5d41402abc4b2a76b9719d911017c592` |
+| `parsed_at` | String | 解析时间戳 | `2025-11-28T14:30:15.123456` |
+| `output_path` | String | 输出文件路径 | `/home/user/output/main.md` |
+| `size` | String | 文件大小（字节） | `12345` |
+
+#### 示例数据
+
+```redis
+# Key
+creeper:parser:a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
+
+# Hash 内容
+path: /home/user/project/src/main.py
+hash: 5d41402abc4b2a76b9719d911017c592
+parsed_at: 2025-11-28T14:30:15.123456
+output_path: /home/user/output/parsed/main.md
+size: 12345
+```
+
+#### 核心操作
+
+**检查文件是否已处理**:
+```python
+from src.file_parser import ParserCache
+
+cache = ParserCache()
+if cache.is_processed(file_item, output_folder):
+    print("文件已处理且内容未变更")
+```
+
+**标记文件为已处理**:
+```python
+cache.mark_processed(file_item, output_path)
+```
+
+**获取未处理的文件**:
+```python
+unprocessed = cache.get_unprocessed_files(all_files, output_folder)
+```
+
+**清理缓存**:
+```bash
+# 删除所有解析缓存
+redis-cli -n 1 KEYS "creeper:parser:*" | xargs redis-cli -n 1 DEL
+```
+
+---
+
 ## 三、混合持久化机制
 
 ### 3.1 设计原理
@@ -277,6 +344,7 @@ redis-cli -n 1 KEYS "creeper:aggregator:*" | xargs redis-cli -n 1 DEL
 | URL 去重 | `data/dedup_cache.json` | 存储所有已爬取 URL |
 | Cookie 管理 | `data/cookies_cache.json` | 存储所有域的 Cookie |
 | 文件聚合 | `data/aggregator_cache.json` | 存储所有输出文件的处理记录 |
+| 文件解析 | `data/parser_cache.json` | 存储所有已解析文件记录（v1.8 新增） |
 
 ### 3.3 恢复机制
 
@@ -331,6 +399,9 @@ redis-cli -n 1 KEYS "creeper:cookie:*" | wc -l
 
 # 文件聚合缓存
 redis-cli -n 1 KEYS "creeper:aggregator:*" | wc -l
+
+# 文件解析缓存（v1.8 新增）
+redis-cli -n 1 KEYS "creeper:parser:*" | wc -l
 ```
 
 ### 4.2 数据清理
@@ -345,6 +416,9 @@ redis-cli -n 1 --scan --pattern "creeper:cookie:*" | xargs -L 1000 redis-cli -n 
 
 # 清理文件聚合缓存
 redis-cli -n 1 --scan --pattern "creeper:aggregator:*" | xargs -L 1000 redis-cli -n 1 DEL
+
+# 清理文件解析缓存（v1.8 新增）
+redis-cli -n 1 --scan --pattern "creeper:parser:*" | xargs -L 1000 redis-cli -n 1 DEL
 ```
 
 **完全清空数据库**（危险操作！）:
@@ -557,31 +631,34 @@ redis-cli -n 1 DEL "creeper:aggregator:<output_file_md5>:files"
 ## 七、架构图
 
 ```
-┌─────────────────────────────────────────────────┐
-│                  Creeper 应用                    │
-├─────────────────┬─────────────┬─────────────────┤
-│   dedup.py      │ cookie_mgr  │ file_aggregator │
-│  (URL 去重)     │ (Cookie)    │   (文件缓存)     │
-└────────┬────────┴──────┬──────┴─────────┬───────┘
-         │               │                 │
-         │  写入/查询    │  写入/查询      │  写入/查询
-         ▼               ▼                 ▼
-┌──────────────────────────────────────────────────┐
-│              Redis (DB 1)                         │
-│  ┌──────────────┬──────────────┬────────────┐   │
-│  │ creeper:url: │creeper:cookie│creeper:     │   │
-│  │ <md5>        │:<domain>     │aggregator:* │   │
-│  └──────────────┴──────────────┴────────────┘   │
-└──────────────────┬───────────────────────────────┘
+┌───────────────────────────────────────────────────────────┐
+│                  Creeper 应用                              │
+├─────────────┬─────────────┬─────────────┬─────────────────┤
+│  dedup.py   │ cookie_mgr  │file_aggre-  │  file_parser   │
+│  (URL去重)  │  (Cookie)   │gator(文件整合│  (文件解析)    │
+│             │             │              │   **v1.8**      │
+└──────┬──────┴──────┬──────┴──────┬───────┴──────┬─────────┘
+       │             │             │              │
+       │  写入/查询  │  写入/查询  │  写入/查询   │ 写入/查询
+       ▼             ▼             ▼              ▼
+┌──────────────────────────────────────────────────────────┐
+│              Redis (DB 1)                                 │
+│  ┌──────────┬──────────┬──────────────┬─────────────┐   │
+│  │creeper:  │creeper:  │creeper:      │creeper:     │   │
+│  │url:<md5> │cookie:   │aggregator:*  │parser:<md5> │   │
+│  │          │<domain>  │              │ **v1.8**    │   │
+│  └──────────┴──────────┴──────────────┴─────────────┘   │
+└──────────────────┬───────────────────────────────────────┘
                    │ 双写机制
                    ▼
-┌──────────────────────────────────────────────────┐
-│          本地持久化文件 (data/)                   │
-│  ┌──────────────┬──────────────┬────────────┐   │
-│  │dedup_cache   │cookies_cache │aggregator_ │   │
-│  │.json         │.json         │cache.json  │   │
-│  └──────────────┴──────────────┴────────────┘   │
-└──────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│          本地持久化文件 (data/)                           │
+│  ┌──────────┬──────────┬──────────────┬─────────────┐   │
+│  │dedup_    │cookies_  │aggregator_   │parser_      │   │
+│  │cache.json│cache.json│cache.json    │cache.json   │   │
+│  │          │          │              │ **v1.8**    │   │
+│  └──────────┴──────────┴──────────────┴─────────────┘   │
+└──────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -595,6 +672,6 @@ redis-cli -n 1 DEL "creeper:aggregator:<output_file_md5>:files"
 
 ---
 
-**文档版本**: v1.0
+**文档版本**: v1.8.0
 **维护者**: Claude Code
-**最后更新**: 2025-11-27
+**最后更新**: 2025-11-28
