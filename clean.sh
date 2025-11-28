@@ -19,10 +19,10 @@ NC='\033[0m' # No Color
 # 确认操作
 echo -e "${YELLOW}⚠️  警告: 此操作将清空以下内容:${NC}"
 echo "  1. Redis 中所有 'creeper:' 开头的键"
-echo "  2. output/ 和 outputs/ 目录下的所有爬虫输出文件"
+# echo "  2. output/ 和 outputs/ 目录下的所有爬虫输出文件"
 echo "  3. parsers/ 目录下的所有解析文件"
 echo "  4. aggregators/ 目录下的所有整合文件"
-echo "  5. creeper.log 日志文件"
+# echo "  5. creeper.log 日志文件"
 echo "  6. data/ 目录下的所有本地缓存文件"
 echo ""
 read -p "确认继续? (y/N): " -n 1 -r
@@ -76,33 +76,33 @@ fi
 echo ""
 
 # 2. 删除输出目录
-echo "🗑️  删除爬虫输出文件..."
-TOTAL_FILES=0
+# echo "🗑️  删除爬虫输出文件..."
+# TOTAL_FILES=0
 
-# 删除 output/ 目录
-if [ -d "output" ]; then
-    FILE_COUNT=$(find output -type f 2>/dev/null | wc -l)
-    rm -rf output/*
-    TOTAL_FILES=$((TOTAL_FILES + FILE_COUNT))
-    echo -e "${GREEN}✓ 已删除 output/ 目录下的 $FILE_COUNT 个文件${NC}"
-else
-    echo -e "${GREEN}✓ output/ 目录不存在,跳过${NC}"
-fi
+# # 删除 output/ 目录
+# if [ -d "output" ]; then
+#     FILE_COUNT=$(find output -type f 2>/dev/null | wc -l)
+#     rm -rf output/*
+#     TOTAL_FILES=$((TOTAL_FILES + FILE_COUNT))
+#     echo -e "${GREEN}✓ 已删除 output/ 目录下的 $FILE_COUNT 个文件${NC}"
+# else
+#     echo -e "${GREEN}✓ output/ 目录不存在,跳过${NC}"
+# fi
 
-# 删除 outputs/ 目录（约定名称）
-if [ -d "outputs" ]; then
-    FILE_COUNT=$(find outputs -type f 2>/dev/null | wc -l)
-    rm -rf outputs/*
-    TOTAL_FILES=$((TOTAL_FILES + FILE_COUNT))
-    echo -e "${GREEN}✓ 已删除 outputs/ 目录下的 $FILE_COUNT 个文件${NC}"
-else
-    echo -e "${GREEN}✓ outputs/ 目录不存在,跳过${NC}"
-fi
+# # 删除 outputs/ 目录（约定名称）
+# if [ -d "outputs" ]; then
+#     FILE_COUNT=$(find outputs -type f 2>/dev/null | wc -l)
+#     rm -rf outputs/*
+#     TOTAL_FILES=$((TOTAL_FILES + FILE_COUNT))
+#     echo -e "${GREEN}✓ 已删除 outputs/ 目录下的 $FILE_COUNT 个文件${NC}"
+# else
+#     echo -e "${GREEN}✓ outputs/ 目录不存在,跳过${NC}"
+# fi
 
-if [ "$TOTAL_FILES" -gt 0 ]; then
-    echo -e "${GREEN}  共删除 $TOTAL_FILES 个爬虫输出文件${NC}"
-fi
-echo ""
+# if [ "$TOTAL_FILES" -gt 0 ]; then
+#     echo -e "${GREEN}  共删除 $TOTAL_FILES 个爬虫输出文件${NC}"
+# fi
+# echo ""
 
 # 3. 删除解析文件目录
 echo "🗑️  删除解析文件..."
@@ -127,15 +127,15 @@ fi
 echo ""
 
 # 5. 删除日志文件
-echo "🗑️  删除日志文件..."
-if [ -f "creeper.log" ]; then
-    LOG_SIZE=$(du -h creeper.log | cut -f1)
-    rm -f creeper.log
-    echo -e "${GREEN}✓ 已删除 creeper.log ($LOG_SIZE)${NC}"
-else
-    echo -e "${GREEN}✓ creeper.log 不存在,跳过${NC}"
-fi
-echo ""
+# echo "🗑️  删除日志文件..."
+# if [ -f "creeper.log" ]; then
+#     LOG_SIZE=$(du -h creeper.log | cut -f1)
+#     rm -f creeper.log
+#     echo -e "${GREEN}✓ 已删除 creeper.log ($LOG_SIZE)${NC}"
+# else
+#     echo -e "${GREEN}✓ creeper.log 不存在,跳过${NC}"
+# fi
+# echo ""
 
 # 6. 删除测试输出的失败记录
 echo "🗑️  删除失败 URL 记录..."

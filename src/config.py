@@ -89,7 +89,7 @@ class Config:
     AGGREGATOR_MODEL = os.getenv('AGGREGATOR_MODEL', 'deepseek-chat')
     AGGREGATOR_CONCURRENCY = int(os.getenv('AGGREGATOR_CONCURRENCY', 1))
     AGGREGATOR_PROMPTS_DIR = os.getenv('AGGREGATOR_PROMPTS_DIR', 'prompts')
-    AGGREGATOR_MAX_TOKENS = int(os.getenv('AGGREGATOR_MAX_TOKENS', 64000))
+    AGGREGATOR_MAX_TOKENS = int(os.getenv('AGGREGATOR_MAX_TOKENS', 8000))  # DeepSeek 限制: [1, 8192]
     AGGREGATOR_MAX_FILE_SIZE = int(os.getenv('AGGREGATOR_MAX_FILE_SIZE', 1048576))  # 1MB
     AGGREGATOR_TEMPERATURE = float(os.getenv('AGGREGATOR_TEMPERATURE', '0.1'))  # 降低以更严格遵循提示词
 

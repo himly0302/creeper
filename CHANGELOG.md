@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.9.3] - 2025-11-28
+
+### Fixed
+- **LLM API 参数配置**：修复 `AGGREGATOR_MAX_TOKENS` 默认值超出 DeepSeek API 限制的问题
+  - 默认值从 `64000` 调整为 `8000`（DeepSeek API 限制：[1, 8192]）
+  - 相关文件：`src/config.py`, `.env.example`
+- **错误处理逻辑**：修复 LLM API 调用失败后仍生成错误文件的问题
+  - `parse_file()` 和 `aggregate()` 方法失败时抛出异常，而非返回错误字符串
+  - 失败时不再生成包含错误信息的文件
+  - 日志输出更准确（成功显示"✓ 已处理"，失败显示"✗ 处理失败"）
+  - 相关文件：`src/file_parser.py`, `src/file_aggregator.py`
+
 ## [1.9.2] - 2025-11-28
 
 ### Added
@@ -25,7 +37,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - 🔧 **命令行示例更新**: 所有文档中的命令行示例更新为使用约定目录结构
   - 爬虫命令: `python creeper.py inputs/input.md`
   - 整合命令: `--output ./aggregators/code_summary.md`
-  - 解析命令: `--input-folder ./inputs/编程 --output-folder ./parsers/编程分析`
+  - 解析命令: `--input-folder ./outputs/编程 --output-folder ./parsers/编程分析`
   - 清理命令: `rm -rf output/* outputs/* parsers/* aggregators/* data/*.json`
 
 ## [1.9.1] - 2025-11-28
@@ -246,7 +258,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - 使用 OpenAI SDK 兼容 DeepSeek API
 - 语言检测使用前 1000 字符,提高检测速度
 - 翻译提示词优化,保持 Markdown 格式完整性
-- 翻译参数: `temperature=0.3`, `max_tokens=8000`
+- 翻译参数: `temperature=0.3`, `max_tokens=64000`
 - 翻译器仅在异步模式中可用(OpenAI SDK 为异步优先)
 
 ### Dependencies

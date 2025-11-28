@@ -389,7 +389,8 @@ class LLMAggregator:
             
         except Exception as e:
             logger.error(f"LLM API 调用失败: {e}")
-            return f"# 整合失败\n\n错误信息: {e}\n\n## 文件列表\n\n{files_content}"
+            # 抛出异常而不是返回错误字符串
+            raise RuntimeError(f"整合失败: {e}") from e
             
     def _format_files(self, files: List[FileItem]) -> str:
         """

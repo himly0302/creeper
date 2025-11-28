@@ -384,7 +384,8 @@ class FileParser:
 
         except Exception as e:
             logger.error(f"LLM API 调用失败: {e}")
-            return f"# 解析失败\n\n错误信息: {e}\n\n## 原始文件\n\n文件路径: {file_item.path}\n\n```\n{file_item.content}\n```"
+            # 抛出异常而不是返回错误字符串，让调用方决定如何处理
+            raise RuntimeError(f"解析文件 {file_item.path} 失败: {e}") from e
 
     def get_output_path(self, input_folder: str, input_file: str, output_folder: str) -> str:
         """
@@ -446,6 +447,7 @@ class FileParser:
 
         except Exception as e:
             logger.error(f"✗ 处理失败: {file_item.path} - {str(e)}", exc_info=config.DEBUG)
+            # 不再生成失败的文件
 
     async def parse_directory(self, input_folder: str, output_folder: str, template: str,
                              extensions: List[str], force: bool = False, concurrency: int = 5):

@@ -22,7 +22,7 @@ Creeper 是一个网页爬虫工具，从 Markdown 文件中提取 URL 并保存
 python creeper.py inputs/<文件名>.md
 
 # 文件解析（一对一）
-python parser.py --input-folder ./inputs/<题材> --output-folder ./parsers/<题材>分析 --template parser/<模板>
+python parser.py --input-folder ./outputs/<题材> --output-folder ./parsers/<题材>分析 --template parser/<模板>
 
 # 文件整合（多对一）
 python aggregator.py --folder ./src --output ./aggregators/<输出名>.md --template aggregator/<模板>
@@ -85,22 +85,22 @@ python3 aggregator.py --folder ./src --output ./aggregators/code_summary.md --te
 ### 运行文件解析 (V1.8 新增)
 ```bash
 # 解析文件夹中的所有文件（一对一输出，推荐使用 parser/ 目录下的模板）
-python parser.py --input-folder ./inputs/编程 --output-folder ./parsers/编程分析 --template parser/code_parser
+python parser.py --input-folder ./outputs/编程 --output-folder ./parsers/编程分析 --template parser/code_parser
 
 # 仅解析特定类型的文件
-python parser.py --input-folder ./inputs/国际 --output-folder ./parsers/国际分析 --template parser/doc_parser --extensions .md,.txt
+python parser.py --input-folder ./outputs/国际 --output-folder ./parsers/国际分析 --template parser/doc_parser --extensions .md,.txt
 
 # 列出可用模板
 python parser.py --list-templates
 
 # 强制重新处理所有文件（忽略缓存）
-python parser.py --input-folder ./inputs/编程 --output-folder ./parsers/编程分析 --template parser/code_parser --force
+python parser.py --input-folder ./outputs/编程 --output-folder ./parsers/编程分析 --template parser/code_parser --force
 
 # 自定义并发数
-python parser.py --input-folder ./inputs/编程 --output-folder ./parsers/编程分析 --template parser/code_parser --concurrency 10
+python parser.py --input-folder ./outputs/编程 --output-folder ./parsers/编程分析 --template parser/code_parser --concurrency 10
 
 # 调试模式
-python parser.py --input-folder ./inputs/编程 --output-folder ./parsers/编程分析 --template parser/code_parser --debug
+python parser.py --input-folder ./outputs/编程 --output-folder ./parsers/编程分析 --template parser/code_parser --debug
 ```
 
 ### 测试

@@ -188,7 +188,7 @@ python parser.py \
   - 存放包含 URL 列表的 Markdown 文件
   - 可按题材分类组织（如 `inputs/国际/`, `inputs/编程/`）
 
-- **`outputs/`**: 爬虫输出文档地址文件夹（注意：当前实际目录名为 `output/`）
+- **`outputs/`**: 爬虫输出文档地址文件夹
   - 存放 `creeper.py` 爬取后生成的 Markdown 文件
   - 按 H1/H2 层级自动组织
   - 图片存储在子目录 `images/`
