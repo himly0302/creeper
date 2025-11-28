@@ -139,6 +139,15 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
   - 下载图片到 `images/` 子目录
   - 替换 URL 为相对路径
   - 图片去重和安全验证（SSRF 防护）
+- `file_aggregator.py`: 文件夹内容 LLM 整合器（V1.6 新增）
+  - FileScanner: 递归扫描文件夹，计算文件哈希
+  - AggregatorCache: 基于 Redis 的增量更新缓存（文件夹级别）
+  - LLMAggregator: 批量整合所有文件到单个输出文件
+- `file_parser.py`: 文件解析器（V1.8 新增）
+  - ParserCache: 基于 Redis 的文件级缓存（混合存储）
+  - FileParser: 独立解析每个文件，一对一输出
+  - 保持输入文件夹的相对路径结构
+  - 支持异步并发处理
 
 ### 关键设计模式
 
@@ -176,10 +185,14 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 - `src/`: 所有源代码模块
 - `tests/`: 所有测试文件（命名规范: `test_*.py`）
 - `data/`: 本地持久化缓存文件
+  - `data/dedup_cache.json`: URL 去重缓存（混合持久化）
+  - `data/cookies_cache.json`: Cookie 缓存（混合持久化）
+  - `data/aggregator_cache.json`: 文件整合缓存（V1.6 新增）
+  - `data/parser_cache.json`: 文件解析缓存（V1.8 新增）
 - `output/`: 生成的 Markdown 文件（镜像输入的 H1/H2 层级）
 - `output/<H1>/<H2>/images/`: 下载的图片文件（如果启用图片下载）（V1.7 新增）
 - `docs/`: 需求和设计文档
-- `prompts/`: 提示词模板目录（用于文件夹内容整合功能，V1.6 新增）
+- `prompts/`: 提示词模板目录（用于文件夹内容整合和解析功能）
 - `docs/features/`: 功能需求文档（V1.6 新增）
 
 ## 重要实现细节
