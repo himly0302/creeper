@@ -8,6 +8,26 @@ Creeper 是一个网页爬虫工具，从 Markdown 文件中提取 URL 并保存
 
 **当前版本**: v1.9.2
 
+## 📋 命令行使用规则
+
+**目录约定**：所有命令行示例必须遵循以下目录结构
+- 输入文件: `inputs/` 目录（如 `inputs/input.md`, `inputs/编程/`）
+- 爬虫输出: `output/` 目录（约定为 `outputs/`，代码中暂未修改）
+- 解析输出: `parsers/` 目录（如 `parsers/编程分析/`）
+- 整合输出: `aggregators/` 目录（如 `aggregators/code_summary.md`）
+
+**命令模板**：
+```bash
+# 爬虫
+python creeper.py inputs/<文件名>.md
+
+# 文件解析（一对一）
+python parser.py --input-folder ./inputs/<题材> --output-folder ./parsers/<题材>分析 --template parser/<模板>
+
+# 文件整合（多对一）
+python aggregator.py --folder ./src --output ./aggregators/<输出名>.md --template aggregator/<模板>
+```
+
 ## 开发命令
 
 ### 环境配置
