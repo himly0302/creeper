@@ -107,8 +107,8 @@ python3 aggregator.py \
 ### 场景 1: 爬取技术文档
 
 ```bash
-# 准备 URLs
-cat > tech_docs.md << 'EOF'
+# 1. 在 inputs/ 目录准备 URLs
+cat > inputs/tech_docs.md << 'EOF'
 # 前端框架文档
 ## React
 https://react.dev/learn
@@ -118,11 +118,11 @@ https://react.dev/reference/react
 https://vuejs.org/guide/introduction.html
 EOF
 
-# 运行爬虫
-python creeper.py tech_docs.md -c 5
+# 2. 运行爬虫
+python creeper.py inputs/tech_docs.md -c 5
 ```
 
-输出结构：
+输出结构（默认在 `output/` 目录）：
 ```
 output/
 └── 前端框架文档/
@@ -141,27 +141,65 @@ python creeper.py --login-url https://example.com/login
 # → 浏览器自动打开，手动登录后关闭窗口
 
 # 2. 使用保存的 Cookie 爬取
-python creeper.py input.md
+python creeper.py inputs/input.md
 # Cookie 自动从 Redis 加载，7 天内有效
 ```
 
 ### 场景 3: 代码库文档生成
 
 ```bash
-# 扫描 src 目录，生成代码总结
+# 1. 扫描 src 目录，生成代码总结（存储到 aggregators/ 目录）
 python3 aggregator.py \
   --folder ./src \
-  --output ./docs/architecture.md \
+  --output ./aggregators/architecture.md \
   --template code_summary
 
-# 增量更新：添加新文件后再次运行
+# 2. 增量更新：添加新文件后再次运行
 touch src/new_module.py
 python3 aggregator.py \
   --folder ./src \
-  --output ./docs/architecture.md \
+  --output ./aggregators/architecture.md \
   --template code_summary
 # → 只处理 new_module.py，并更新文档
 ```
+
+### 场景 4: 批量解析文件 (V1.8 新增)
+
+```bash
+# 1. 解析文档文件夹（存储到 parsers/ 目录）
+python parser.py \
+  --input-folder ./inputs/编程/ \
+  --output-folder ./parsers/编程分析/ \
+  --template parser/practical_parser
+
+# 2. 解析代码文件
+python parser.py \
+  --input-folder ./src \
+  --output-folder ./parsers/代码分析/ \
+  --template parser/code_parser \
+  --extensions .py
+```
+
+## 📁 项目目录约定
+
+### 核心输出目录
+
+- **`inputs/`**: 爬虫输入文档地址文件夹
+  - 存放包含 URL 列表的 Markdown 文件
+  - 可按题材分类组织（如 `inputs/国际/`, `inputs/编程/`）
+
+- **`outputs/`**: 爬虫输出文档地址文件夹（注意：当前实际目录名为 `output/`）
+  - 存放 `creeper.py` 爬取后生成的 Markdown 文件
+  - 按 H1/H2 层级自动组织
+  - 图片存储在子目录 `images/`
+
+- **`parsers/`**: 解析文档存放文件夹
+  - 存放 `parser.py` 生成的文档
+  - 每个文件独立解析，一对一输出
+
+- **`aggregators/`**: 融合文档存放文件夹
+  - 存放 `aggregator.py` 生成的文档
+  - 多个文件整合为单个输出
 
 ## ⚙️ 配置指南
 

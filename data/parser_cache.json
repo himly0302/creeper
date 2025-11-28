@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "updated_at": "2025-11-28T10:11:11.529054",
+  "data": {
+    "306c132fdb11b316eb0e8fa4231fa32b": {
+      "path": "/tmp/test_parser_input/test.py",
+      "hash": "a4cc0747916d771998e440495e615ea8",
+      "parsed_at": "2025-11-28T10:11:11.527733",
+      "output_path": "/tmp/test_parser_output/test.md",
+      "size": "22"
+    }
+  }
+}

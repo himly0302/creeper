@@ -1,0 +1,16 @@
+{
+  "version": "1.0",
+  "updated_at": "2025-11-28T09:53:30.724195",
+  "data": {
+    "cd740ee57d5a8a37cb24a6ab0a045ca0": {
+      "url": "https://news.qq.com/rain/a/20251127A02V5S00",
+      "crawled_at": "2025-11-28 09:53:29",
+      "status": "completed"
+    },
+    "63da735e4bbb36c9bcf09ac14c1f0b66": {
+      "url": "https://www.sohu.com/a/958566033_122377748",
+      "crawled_at": "2025-11-28 09:53:30",
+      "status": "completed"
+    }
+  }
+}

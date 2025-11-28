@@ -1,0 +1,9 @@
+{
+  "creeper:aggregator:082ac80d42a8ac4df64a82e83a40b02d:files": {
+    "folder": "/tmp/test_agg_input",
+    "output_file": "/tmp/test_agg_output.md",
+    "processed_files": {
+      "/tmp/test_agg_input/test.md": "b282d64377f4575fd1eee28fc88b7bc3"
+    }
+  }
+}

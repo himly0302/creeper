@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Creeper 是一个网页爬虫工具，从 Markdown 文件中提取 URL 并保存为结构化的本地 Markdown 文档。支持同步和异步两种爬取模式，基于 Redis 的去重机制，可选的内容翻译功能。V1.6 新增文件夹内容 LLM 整合功能，V1.7 新增图片本地化存储功能，V1.8 新增文件解析功能，V1.9 重构提示词模板组织结构并新增题材类解析模板。
 
-**当前版本**: v1.9.1
+**当前版本**: v1.9.2
 
 ## 开发命令
 
@@ -182,6 +182,28 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 
 ## 项目结构约定
 
+### 核心输出目录约定 (V1.9.1 新增)
+
+- **`inputs/`**: 爬虫输入文档地址文件夹
+  - 存放包含 URL 列表的 Markdown 文件（如 `input.md`）
+  - 可按题材分类存放（如 `inputs/国际/`, `inputs/编程/`）
+
+- **`outputs/`**: 爬虫输出文档地址文件夹（注意：当前实际目录名为 `output/`）
+  - 存放 `creeper.py` 爬取后生成的 Markdown 文件
+  - 按 H1/H2 层级自动组织目录结构
+  - 图片存储在 `outputs/<H1>/<H2>/images/`（如果启用 `DOWNLOAD_IMAGES=true`）
+
+- **`parsers/`**: 解析文档存放文件夹
+  - 存放通过文件解析功能（`parser.py`）生成的文档
+  - 每个文件独立解析，一对一输出
+  - 保持源文件夹的相对路径结构，输出扩展名统一为 `.md`
+
+- **`aggregators/`**: 融合文档存放文件夹
+  - 存放通过文件整合功能（`aggregator.py`）生成的文档
+  - 多个文件整合为单个输出文件（如代码总结、文档合并）
+
+### 其他系统目录
+
 - `src/`: 所有源代码模块
 - `tests/`: 所有测试文件（命名规范: `test_*.py`）
 - `data/`: 本地持久化缓存文件
@@ -189,13 +211,11 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
   - `data/cookies_cache.json`: Cookie 缓存（混合持久化）
   - `data/aggregator_cache.json`: 文件整合缓存（V1.6 新增）
   - `data/parser_cache.json`: 文件解析缓存（V1.8 新增）
-- `output/`: 生成的 Markdown 文件（镜像输入的 H1/H2 层级）
-- `output/<H1>/<H2>/images/`: 下载的图片文件（如果启用图片下载）（V1.7 新增）
 - `docs/`: 需求和设计文档
-- `prompts/`: 提示词模板目录（用于文件夹内容整合和解析功能）
-  - `prompts/parser/`: 文件解析类模板（一对一输出）
-  - `prompts/aggregator/`: 文件整合类模板（多对一输出）
-- `docs/features/`: 功能需求文档（V1.6 新增）
+  - `docs/features/`: 功能需求文档（V1.6 新增）
+- `prompts/`: 提示词模板目录（V1.9 重构）
+  - `prompts/parser/`: 文件解析类模板（一对一输出，9 个模板）
+  - `prompts/aggregator/`: 文件整合类模板（多对一输出，8 个模板）
 
 ## 重要实现细节
 

@@ -35,11 +35,12 @@ wheels/
 logs/
 creeper.log
 
-# 输出目录
-outputs/
-data/
-aggregators/
-parsers/
+# 输出目录（约定名称和实际目录）
+output/       # 爬虫输出（当前实际使用）
+outputs/      # 爬虫输出（约定名称）
+parsers/      # 解析文档输出
+aggregators/  # 融合文档输出
+data/         # 缓存数据
 
 # IDE 配置
 .vscode/
