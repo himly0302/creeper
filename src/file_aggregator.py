@@ -335,40 +335,61 @@ class LLMAggregator:
         """
         self.client = AsyncOpenAI(api_key=api_key, base_url=base_url)
         self.model = model
+        self.base_url = base_url
         self.temperature = temperature
+        self.fallback_max_tokens = max_tokens
 
-        # 模型能力自动探测
+        # 延迟探测：首次调用 aggregate 时进行
+        self._max_tokens = None
+        self._capability_detected = False
+
+    @property
+    def max_tokens(self) -> int:
+        """获取 max_tokens（兼容旧代码）"""
+        if self._max_tokens is None:
+            return self.fallback_max_tokens
+        return self._max_tokens
+
+    async def _ensure_capability_detected(self):
+        """确保模型能力已探测（懒加载）"""
+        if self._capability_detected:
+            return
+
+        self._capability_detected = True
+
         if config.ENABLE_MODEL_AUTO_DETECTION:
             try:
                 capability_mgr = ModelCapabilityManager()
-                capability = asyncio.run(capability_mgr.get_or_detect(
-                    model=model,
-                    base_url=base_url,
+                capability = await capability_mgr.get_or_detect(
+                    model=self.model,
+                    base_url=self.base_url,
                     client=self.client,
-                    fallback_max_tokens=max_tokens
-                ))
-                self.max_tokens = capability['max_output_tokens']
-                logger.info(f"使用探测到的 max_tokens: {self.max_tokens}")
+                    fallback_max_tokens=self.fallback_max_tokens
+                )
+                self._max_tokens = capability['max_output_tokens']
+                logger.info(f"使用探测到的 max_tokens: {self._max_tokens}")
             except Exception as e:
                 logger.warning(f"模型能力探测失败，使用配置值: {e}")
-                self.max_tokens = max_tokens
+                self._max_tokens = self.fallback_max_tokens
         else:
-            self.max_tokens = max_tokens
-            logger.info(f"使用配置的 max_tokens: {self.max_tokens}")
-        
+            self._max_tokens = self.fallback_max_tokens
+            logger.info(f"使用配置的 max_tokens: {self._max_tokens}")
+
     async def aggregate(self, files: List[FileItem], prompt_template: str,
                        existing_content: Optional[str] = None) -> str:
         """
         调用 LLM 整合文件内容
-        
+
         Args:
             files: 文件列表
             prompt_template: 提示词模板
             existing_content: 已有输出内容(用于增量更新)
-            
+
         Returns:
             整合后的内容
         """
+        # 确保模型能力已探测
+        await self._ensure_capability_detected()
         if not files:
             logger.warning("文件列表为空")
             return ""

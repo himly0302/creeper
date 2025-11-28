@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.10.1] - 2025-11-28
+
+### Fixed
+- **LLM 模型能力探测**：修复在运行中的事件循环中调用 `asyncio.run()` 导致的错误
+  - 将探测逻辑从 `__init__` 移至首次调用时（懒加载模式）
+  - 使用 `@property` 装饰器提供 `max_tokens` 兼容性
+  - 相关文件：`src/file_parser.py`, `src/file_aggregator.py`, `src/translator.py`
+
 ## [1.10.0] - 2025-11-28
 
 ### Added

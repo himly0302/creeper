@@ -35,25 +35,44 @@ class Translator:
         """
         self.client = AsyncOpenAI(api_key=api_key, base_url=base_url)
         self.model = model
+        self.base_url = base_url
 
-        # 模型能力自动探测
+        # 延迟探测：首次调用翻译方法时进行
+        self._max_tokens = None
+        self._capability_detected = False
+        logger.info(f"翻译器已初始化: 模型={model}")
+
+    @property
+    def max_tokens(self) -> int:
+        """获取 max_tokens（兼容旧代码）"""
+        if self._max_tokens is None:
+            return 8000  # 翻译模块的默认值
+        return self._max_tokens
+
+    async def _ensure_capability_detected(self):
+        """确保模型能力已探测（懒加载）"""
+        if self._capability_detected:
+            return
+
+        self._capability_detected = True
+
         if config.ENABLE_MODEL_AUTO_DETECTION:
             try:
                 capability_mgr = ModelCapabilityManager()
-                capability = asyncio.run(capability_mgr.get_or_detect(
-                    model=model,
-                    base_url=base_url,
+                capability = await capability_mgr.get_or_detect(
+                    model=self.model,
+                    base_url=self.base_url,
                     client=self.client,
                     fallback_max_tokens=8000  # 翻译模块的默认值
-                ))
-                self.max_tokens = capability['max_output_tokens']
-                logger.info(f"翻译器已初始化: 模型={model}, max_tokens={self.max_tokens}")
+                )
+                self._max_tokens = capability['max_output_tokens']
+                logger.info(f"使用探测到的 max_tokens: {self._max_tokens}")
             except Exception as e:
                 logger.warning(f"模型能力探测失败，使用默认值 8000: {e}")
-                self.max_tokens = 8000
+                self._max_tokens = 8000
         else:
-            self.max_tokens = 8000
-            logger.info(f"翻译器已初始化: 模型={model}, max_tokens=8000")
+            self._max_tokens = 8000
+            logger.info(f"使用配置的 max_tokens: 8000")
 
     def detect_language(self, text: str) -> str:
         """
@@ -102,6 +121,9 @@ class Translator:
         Returns:
             翻译后的文本
         """
+        # 确保模型能力已探测
+        await self._ensure_capability_detected()
+
         if not text or not text.strip():
             return text
 
