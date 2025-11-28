@@ -62,6 +62,27 @@ python3 aggregator.py --list-templates
 python3 aggregator.py --folder ./src --output ./docs/code_summary.md --template code_summary --force
 ```
 
+### 运行文件解析 (V1.8 新增)
+```bash
+# 解析文件夹中的所有文件（一对一输出）
+python parser.py --input-folder ./src --output-folder ./output/parsed --template file_parser
+
+# 仅解析特定类型的文件
+python parser.py --input-folder ./docs --output-folder ./output/summaries --template file_parser --extensions .md,.txt
+
+# 列出可用模板
+python parser.py --list-templates
+
+# 强制重新处理所有文件（忽略缓存）
+python parser.py --input-folder ./src --output-folder ./output/parsed --template file_parser --force
+
+# 自定义并发数
+python parser.py --input-folder ./src --output-folder ./output/parsed --template file_parser --concurrency 10
+
+# 调试模式
+python parser.py --input-folder ./src --output-folder ./output/parsed --template file_parser --debug
+```
+
 ### 测试
 ```bash
 # 运行所有测试
