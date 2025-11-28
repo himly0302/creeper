@@ -36,11 +36,14 @@ logs/
 creeper.log
 
 # 输出目录（约定名称和实际目录）
-output/       # 爬虫输出（当前实际使用）
-outputs/      # 爬虫输出（约定名称）
+inputs/      # 爬虫输入
+outputs/      # 爬虫输出
 parsers/      # 解析文档输出
 aggregators/  # 融合文档输出
 data/         # 缓存数据
+*.png
+*.jpg
+*.webp
 
 # IDE 配置
 .vscode/

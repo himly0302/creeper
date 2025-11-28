@@ -1,6 +1,6 @@
 # Claude Code 最佳实践 • Anthropic
 
-> 📅 **爬取时间**: 2025-11-28 10:45:30
+> 📅 **爬取时间**: 2025-11-28 14:12:27
 > 🔗 **来源链接**: https://fisherdaddy.com/posts/claude-code-best-practices/
 > 📝 **网页描述**: Claude Code 是一款用于自主编码的命令行工具。这篇文章涵盖了一些技巧和窍门，这些技巧和窍门已被证明在使用 Claude Code 处理各种代码库、语言和环境时非常有效。
 > ✍️ **作者**: Fisherdaddy
@@ -248,7 +248,7 @@ Claude Code 是一款代理式编码助手，可自动将上下文拉入提示�
 
 文件，并经常调整指令（例如使用“IMPORTANT”或“YOU MUST”添加强调）以提高遵循度。
 
-![xx](images/image-5268e16cf684.webp)
+![xx](images/image-5268e16cf684-1.webp)
 
 ### c. 管理 Claude 的允许工具列表
 
@@ -387,7 +387,7 @@ Claude Code 并不强加特定的工作流，让您可以灵活地按自己想�
 
 像人类一样，Claude 的输出往往会随着迭代而显著改善。虽然第一个版本可能不错，但经过 2-3 次迭代后，它通常会看起来好得多。为 Claude 提供工具以查看其输出，以获得最佳结果。
 
-![xxx](images/image-85b26b7155ba.webp)
+![xxx](images/image-85b26b7155ba-1.webp)
 
 ### d. 安全 YOLO 模式
 
@@ -422,7 +422,7 @@ Claude Code 并不强加特定的工作流，让您可以灵活地按自己想�
 
 在 Anthropic，以这种方式使用 Claude Code 已成为我们的核心入职工作流，显著缩短了熟悉时间并减少了其他工程师的负担。不需要特殊的提示！只需提问，Claude 就会探索代码以找到答案。
 
-![xx](images/image-710b31dff2c6.webp)
+![xx](images/image-710b31dff2c6-1.webp)
 
 ### f. 使用 Claude 与 git 交互
 
@@ -466,7 +466,7 @@ Claude Code 的成功率会随着更具体的指令而显著提高，尤其是�
 
 Claude 可以推断意图，但它不会读心术。具体性带来更好的一致性预期。
 
-![xxx](images/image-2fe19dd9580a.webp)
+![xxx](images/image-2fe19dd9580a-1.webp)
 
 ### b. 为 Claude 提供图像
 
@@ -476,13 +476,13 @@ Claude 通过多种方法出色地处理图像和图表：
 
 这在处理设计模型作为 UI 开发的参考点，以及用于分析和调试的可视化图表时特别有用。如果您没有向上下文中添加视觉效果，向 Claude 明确说明结果在视觉上具有吸引力的重要性仍然会有所帮助。
 
-![xxx](images/image-bd384f1623a9.webp)
+![xxx](images/image-bd384f1623a9-1.webp)
 
 ### c. 提及您希望 Claude 查看或处理的文件
 
 使用 tab 键自动补全功能，快速引用仓库中任何地方的文件或文件夹，帮助 Claude 找到或更新正确的资源。
 
-![xx](images/image-519ec3ee1ef9.webp)
+![xx](images/image-519ec3ee1ef9-1.webp)
 
 ### d. 为 Claude 提供 URL
 

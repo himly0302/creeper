@@ -1,6 +1,6 @@
 # 快速开始 - Claude Code Docs
 
-> 📅 **爬取时间**: 2025-11-28 10:45:33
+> 📅 **爬取时间**: 2025-11-28 14:12:31
 > 🔗 **来源链接**: https://code.claude.com/docs/zh-CN/quickstart
 > 📝 **网页描述**: 欢迎使用 Claude Code！
 > 📆 **发布时间**: 2025-11-06

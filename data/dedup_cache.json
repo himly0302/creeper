@@ -1,0 +1,91 @@
+{
+  "version": "1.0",
+  "updated_at": "2025-11-28T17:25:11.658470",
+  "data": {
+    "b6afccdaac7d7f5da94f0415b508c45e": {
+      "url": "https://news.ycwb.com/ikinvjjtic/content_53820194.htm",
+      "crawled_at": "2025-11-28 13:14:10",
+      "status": "completed"
+    },
+    "ed5074c208f0273842d14c3ab2c7207b": {
+      "url": "https://www.bbc.com/zhongwen/articles/cz7nqgerjg4o/trad",
+      "crawled_at": "2025-11-28 13:15:09",
+      "status": "completed"
+    },
+    "b964d257536b6ae8aa34599d98eca835": {
+      "url": "https://cn.nytimes.com/china/20251127/hong-kong-fire-apartment-buildings",
+      "crawled_at": "2025-11-28 14:05:21",
+      "status": "completed"
+    },
+    "3bb4b3ae0b34946e254b6ce5aa4e647c": {
+      "url": "https://m.thepaper.cn/detail/32053742",
+      "crawled_at": "2025-11-28 14:05:48",
+      "status": "completed"
+    },
+    "d4ce144d69b01cd3940e54f5b530e434": {
+      "url": "https://fisherdaddy.com/posts/claude-code-best-practices/",
+      "crawled_at": "2025-11-28 14:12:30",
+      "status": "completed"
+    },
+    "e60dd00f3d482b63ddea2d6af7557fa4": {
+      "url": "https://code.claude.com/docs/zh-CN/quickstart",
+      "crawled_at": "2025-11-28 14:12:31",
+      "status": "completed"
+    },
+    "accc18b9fa1dfebb35b6a846766f2afb": {
+      "url": "https://hrefgo.com/blog/claude-code-best-practices-complete-guide",
+      "crawled_at": "2025-11-28 14:12:35",
+      "status": "completed"
+    },
+    "d18b4175867a4335ee124906f936e638": {
+      "url": "https://www.claude-cn.org/posts/Claude-code-best-practices.html",
+      "crawled_at": "2025-11-28 14:12:35",
+      "status": "completed"
+    },
+    "181c372068256b1b8b8c86c5c78a3450": {
+      "url": "https://www.msn.cn/zh-cn/news/other/37%E5%B2%81%E6%B6%88%E9%98%B2%E5%91%98%E4%BD%95%E4%BC%9F%E8%B1%AA%E5%9C%A8%E9%A6%99%E6%B8%AF%E5%A4%A7%E7%81%AB%E4%B8%AD%E6%AE%89%E8%81%8C-%E5%8E%9F%E6%9C%AC%E8%AE%A1%E5%88%92%E4%B8%8B%E6%9C%88%E7%BB%93%E5%A9%9A-%E5%A5%B3%E5%8F%8B%E6%9C%80%E6%96%B0%E5%8F%91%E6%96%87/ar-AA1Rgs4D?ocid=BingNewsSerp",
+      "crawled_at": "2025-11-28 16:59:50",
+      "status": "completed"
+    },
+    "10b8e041a7c5a13a3b5cf7a0db90e4d0": {
+      "url": "https://www.beijing.gov.cn/gongkai/ldhd/202511/t20251124_4295118.html",
+      "crawled_at": "2025-11-28 17:24:59",
+      "status": "completed"
+    },
+    "a36ee71abb8a7879b2379355aceae550": {
+      "url": "https://www.gov.cn/lianbo/bumen/202311/content_6913551.htm",
+      "crawled_at": "2025-11-28 17:25:02",
+      "status": "completed"
+    },
+    "971ee9e99d5f8a6cadff9a371e566f93": {
+      "url": "https://finance.sina.com.cn/stock/relnews/cn/2025-09-16/doc-infqstcm5792015.shtml)",
+      "crawled_at": "2025-11-28 17:25:02",
+      "status": "completed"
+    },
+    "d4ba705eb9acc2bced22877eb8dd9b29": {
+      "url": "https://www.ncsti.gov.cn/kjdt/kjrd/qtrd_kjrd/202502/t20250227_196968.html",
+      "crawled_at": "2025-11-28 17:25:04",
+      "status": "completed"
+    },
+    "c99e785a762f71327b715be70c739919": {
+      "url": "https://www.beijing.gov.cn/gongkai/ldhd/202511/t20251124_4295118.html)",
+      "crawled_at": "2025-11-28 17:25:06",
+      "status": "completed"
+    },
+    "1bfb27446b13253ac89b320affd51b69": {
+      "url": "https://www.esmchina.com/news/12835.html",
+      "crawled_at": "2025-11-28 17:25:06",
+      "status": "completed"
+    },
+    "b27736749ac90df5bd1f5584bb9fd31d": {
+      "url": "https://www.gov.cn/lianbo/bumen/202311/content_6913551.htm)",
+      "crawled_at": "2025-11-28 17:25:08",
+      "status": "completed"
+    },
+    "552f5585c359027cbeefaaca12ea7c52": {
+      "url": "https://finance.sina.com.cn/stock/relnews/cn/2025-09-16/doc-infqstcm5792015.shtml",
+      "crawled_at": "2025-11-28 17:25:11",
+      "status": "completed"
+    }
+  }
+}
