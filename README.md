@@ -239,10 +239,18 @@ IMAGE_DOWNLOAD_TIMEOUT=30       # 图片下载超时时间（秒，默认 30）
 AGGREGATOR_API_KEY=sk-your-aggregator-key-here
 AGGREGATOR_BASE_URL=https://api.deepseek.com
 AGGREGATOR_MODEL=deepseek-chat
-AGGREGATOR_MAX_TOKENS=64000
+AGGREGATOR_MAX_TOKENS=8000  # DeepSeek 限制: [1, 8192]
 ```
 
 **注意**: 翻译和文件整合使用独立的 API 配置，可以使用不同的 Key 或服务商。
+
+### LLM 模型能力自动探测 (V1.10 新增)
+```bash
+ENABLE_MODEL_AUTO_DETECTION=true  # 启用自动探测（默认: true）
+MODEL_DETECTION_TIMEOUT=10        # 探测超时时间（秒，默认: 10）
+```
+
+**说明**：启用后，首次调用 LLM 时会自动询问模型的 `max_input_tokens` 和 `max_output_tokens`，结果缓存到 Redis 和本地文件。探测失败时使用配置的 `AGGREGATOR_MAX_TOKENS` 作为回退值。
 
 ### Cookie 管理配置
 ```bash

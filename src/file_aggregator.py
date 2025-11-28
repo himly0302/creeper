@@ -9,6 +9,7 @@
 - LLM 整合: 调用 LLM API 生成整合内容
 """
 
+import asyncio
 import hashlib
 import json
 import os
@@ -19,6 +20,7 @@ from typing import Dict, List, Optional
 from openai import AsyncOpenAI
 
 from src.config import config
+from src.model_capabilities import ModelCapabilityManager
 from src.utils import setup_logger
 
 logger = setup_logger(__name__)
@@ -319,7 +321,7 @@ class AggregatorCache:
 
 class LLMAggregator:
     """LLM 文件整合器"""
-    
+
     def __init__(self, api_key: str, base_url: str, model: str, max_tokens: int, temperature: float = 0.1):
         """
         初始化 LLM 整合器
@@ -328,13 +330,31 @@ class LLMAggregator:
             api_key: API Key
             base_url: API Base URL
             model: 模型名称
-            max_tokens: 最大 token 数
+            max_tokens: 最大 token 数（探测失败时的回退值）
             temperature: 生成温度 (默认 0.1,更严格遵循指令)
         """
         self.client = AsyncOpenAI(api_key=api_key, base_url=base_url)
         self.model = model
-        self.max_tokens = max_tokens
         self.temperature = temperature
+
+        # 模型能力自动探测
+        if config.ENABLE_MODEL_AUTO_DETECTION:
+            try:
+                capability_mgr = ModelCapabilityManager()
+                capability = asyncio.run(capability_mgr.get_or_detect(
+                    model=model,
+                    base_url=base_url,
+                    client=self.client,
+                    fallback_max_tokens=max_tokens
+                ))
+                self.max_tokens = capability['max_output_tokens']
+                logger.info(f"使用探测到的 max_tokens: {self.max_tokens}")
+            except Exception as e:
+                logger.warning(f"模型能力探测失败，使用配置值: {e}")
+                self.max_tokens = max_tokens
+        else:
+            self.max_tokens = max_tokens
+            logger.info(f"使用配置的 max_tokens: {self.max_tokens}")
         
     async def aggregate(self, files: List[FileItem], prompt_template: str,
                        existing_content: Optional[str] = None) -> str:

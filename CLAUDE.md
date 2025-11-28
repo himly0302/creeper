@@ -186,6 +186,13 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 - 文件模式: JSON 存储，向后兼容
 - 交互式登录: Playwright 打开浏览器，用户手动登录，Cookie 自动提取
 
+**LLM 模型能力自动探测** (V1.10 新增)
+- 首次调用 LLM 时自动询问模型的 `max_input_tokens` 和 `max_output_tokens`
+- Redis + 本地 JSON 文件混合缓存（`data/model_capabilities.json`）
+- 探测失败时使用配置的 `AGGREGATOR_MAX_TOKENS` 作为回退值
+- 集成到 FileParser、LLMAggregator、Translator 三个模块
+- 开发者规范：新增 LLM 调用模块时，应在 `__init__` 中调用 `ModelCapabilityManager.get_or_detect()`
+
 ## 配置管理
 
 通过 `.env` 文件配置（从 `.env.example` 复制）:
@@ -199,6 +206,8 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 - `MAX_IMAGE_SIZE_MB`: 最大图片大小限制（默认: 10 MB）（V1.7 新增）
 - `IMAGE_DOWNLOAD_TIMEOUT`: 图片下载超时时间（默认: 30 秒）（V1.7 新增）
 - `AGGREGATOR_*`: 文件整合功能配置（V1.6 新增）
+- `ENABLE_MODEL_AUTO_DETECTION`: LLM 模型能力自动探测（默认: true）（V1.10 新增）
+- `MODEL_DETECTION_TIMEOUT`: 模型探测超时时间（默认: 10 秒）（V1.10 新增）
 
 ## 项目结构约定
 

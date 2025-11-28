@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2025-11-28T11:00:30.866861",
+  "updated_at": "2025-11-28T11:01:49.186290",
   "data": {
     "c4884f93bcfc3713d158f958e4114f49": {
       "parsed_at": "2025-11-28T11:00:30.865479",
@@ -8,6 +8,13 @@
       "hash": "f7bc29a693abd15e6345d0d9b34fb571",
       "path": "outputs/claude使用文档/个人文章/claude-code-最佳实践-anthropic.md",
       "size": "30959"
+    },
+    "ec5ddc75366702951411cb7f637ec2ff": {
+      "parsed_at": "2025-11-28T11:01:49.184769",
+      "output_path": "/home/lyf/workspaces/creeper/parsers/claude使用文档/claude-code最佳实践完全指南-2025年26个实战技巧助你成为编程高手-博客-hrefgo-ai.md",
+      "hash": "119333384b42917e606aa954d3eaa41b",
+      "path": "outputs/claude使用文档/个人文章/claude-code最佳实践完全指南-2025年26个实战技巧助你成为编程高手-博客-hrefgo-ai.md",
+      "size": "26850"
     }
   }
 }

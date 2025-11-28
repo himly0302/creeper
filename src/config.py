@@ -93,6 +93,11 @@ class Config:
     AGGREGATOR_MAX_FILE_SIZE = int(os.getenv('AGGREGATOR_MAX_FILE_SIZE', 1048576))  # 1MB
     AGGREGATOR_TEMPERATURE = float(os.getenv('AGGREGATOR_TEMPERATURE', '0.1'))  # 降低以更严格遵循提示词
 
+    # LLM 模型能力自动探测配置
+    ENABLE_MODEL_AUTO_DETECTION = os.getenv('ENABLE_MODEL_AUTO_DETECTION', 'true').lower() == 'true'
+    MODEL_DETECTION_TIMEOUT = int(os.getenv('MODEL_DETECTION_TIMEOUT', 10))
+    MODEL_CAPABILITY_CACHE_FILE = os.getenv('MODEL_CAPABILITY_CACHE_FILE', 'data/model_capabilities.json')
+
     # 调试配置
     DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')

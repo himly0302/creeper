@@ -11,6 +11,7 @@ from langdetect import detect, LangDetectException
 
 from src.utils import setup_logger
 from src.config import config
+from src.model_capabilities import ModelCapabilityManager
 
 logger = setup_logger("translator")
 
@@ -35,7 +36,24 @@ class Translator:
         self.client = AsyncOpenAI(api_key=api_key, base_url=base_url)
         self.model = model
 
-        logger.info(f"翻译器已初始化: 模型={model}")
+        # 模型能力自动探测
+        if config.ENABLE_MODEL_AUTO_DETECTION:
+            try:
+                capability_mgr = ModelCapabilityManager()
+                capability = asyncio.run(capability_mgr.get_or_detect(
+                    model=model,
+                    base_url=base_url,
+                    client=self.client,
+                    fallback_max_tokens=8000  # 翻译模块的默认值
+                ))
+                self.max_tokens = capability['max_output_tokens']
+                logger.info(f"翻译器已初始化: 模型={model}, max_tokens={self.max_tokens}")
+            except Exception as e:
+                logger.warning(f"模型能力探测失败，使用默认值 8000: {e}")
+                self.max_tokens = 8000
+        else:
+            self.max_tokens = 8000
+            logger.info(f"翻译器已初始化: 模型={model}, max_tokens=8000")
 
     def detect_language(self, text: str) -> str:
         """
@@ -128,7 +146,7 @@ class Translator:
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.3,  # 降低随机性,提高翻译稳定性
-                max_tokens=8000   # 控制输出长度
+                max_tokens=self.max_tokens   # 使用探测到的 max_tokens
             )
 
             translated = response.choices[0].message.content.strip()

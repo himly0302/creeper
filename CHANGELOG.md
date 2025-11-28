@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.10.0] - 2025-11-28
+
+### Added
+- **LLM 模型能力自动探测**：首次调用 LLM 时自动询问模型的 token 限制，避免手动配置错误
+  - 自动探测 `max_input_tokens` 和 `max_output_tokens`
+  - Redis + 本地文件混合持久化缓存（避免重复探测）
+  - 支持探测失败时的智能回退（使用配置的 `AGGREGATOR_MAX_TOKENS`）
+  - 新增配置项：`ENABLE_MODEL_AUTO_DETECTION`（默认启用）、`MODEL_DETECTION_TIMEOUT`（默认 10 秒）
+  - 相关文件：`src/model_capabilities.py`, `src/file_parser.py`, `src/file_aggregator.py`, `src/translator.py`
+  - 缓存文件：`data/model_capabilities.json`
+
 ## [1.9.3] - 2025-11-28
 
 ### Fixed
