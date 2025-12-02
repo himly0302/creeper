@@ -36,7 +36,7 @@ logs/
 creeper.log
 
 # 输出目录（约定名称和实际目录）
-inputs/      # 爬虫输入
+# inputs/      # 爬虫输入
 outputs/      # 爬虫输出
 parsers/      # 解析文档输出
 aggregators/  # 融合文档输出
