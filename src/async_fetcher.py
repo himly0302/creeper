@@ -109,14 +109,24 @@ class AsyncWebFetcher:
             if self.use_playwright:
                 try:
                     page = await self._fetch_dynamic(url)
-                    if page.success:
-                        logger.info(f"✓ 动态渲染成功: {url}")
-                        # 调用翻译
-                        if self.translator:
-                            try:
-                                page = await self.translator.translate_webpage(page)
-                            except Exception as e:
-                                logger.error(f"翻译失败(保留原文): {e}")
+                    if page.success and len(page.content) >= config.MIN_TEXT_LENGTH:
+                        # 额外检查内容质量
+                        if self._is_valid_content(page.content):
+                            logger.info(f"✓ 动态渲染成功: {url}")
+                            # 调用翻译
+                            if self.translator:
+                                try:
+                                    page = await self.translator.translate_webpage(page)
+                                except Exception as e:
+                                    logger.error(f"翻译失败(保留原文): {e}")
+                            return page
+                        else:
+                            logger.warning(f"动态渲染内容质量不佳，跳过保存: {url}")
+                            page.success = False
+                            return page
+                    elif page.success:
+                        logger.warning(f"动态渲染内容不足(<{config.MIN_TEXT_LENGTH}字符),跳过保存: {url}")
+                        page.success = False
                         return page
                 except Exception as e:
                     logger.error(f"动态渲染失败: {e}")
@@ -331,6 +341,62 @@ class AsyncWebFetcher:
             return title.get_text().strip() if title else ""
         except Exception:
             return ""
+
+    def _is_valid_content(self, content: str) -> bool:
+        """
+        检查内容是否有效，过滤掉错误页面和低质量内容
+
+        Args:
+            content: 网页内容
+
+        Returns:
+            True 表示内容有效，False 表示内容无效
+        """
+        content_lower = content.lower()
+
+        # 检查常见的错误页面指示词
+        error_indicators = [
+            "页面不存在",
+            "内容不存在",
+            "找不到页面",
+            "404",
+            "页面未找到",
+            "您搜索的内容不存在",
+            "已不存在",
+            "访问被拒绝",
+            "禁止访问",
+            "请验证您是机器人",
+            "请点击下方方框",
+            "证明您不是机器人",
+            "请确保您的浏览器支持",
+            "javascript",
+            "cookie 功能",
+            "订阅",
+            "立即订阅",
+            "登录",
+            "注册",
+            "请登录",
+            "需要登录"
+        ]
+
+        # 如果包含错误指示词，认为内容无效
+        for indicator in error_indicators:
+            if indicator in content_lower:
+                return False
+
+        # 检查内容是否太短或主要是重复文字
+        if len(content.strip()) < 200:
+            return False
+
+        # 检查是否包含足够的中文字符或英文内容
+        chinese_chars = len([c for c in content if '\u4e00' <= c <= '\u9fff'])
+        english_chars = len([c for c in content if 'a' <= c <= 'z' or 'A' <= c <= 'Z'])
+
+        # 如果中文字符少于50个且英文字符少于100个，可能内容质量不高
+        if chinese_chars < 50 and english_chars < 100:
+            return False
+
+        return True
 
     async def fetch_batch(self, urls: List[str]) -> List[WebPage]:
         """

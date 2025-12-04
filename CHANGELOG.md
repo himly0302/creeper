@@ -35,6 +35,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - 统一使用 self.redis_client 属性名称，保持与初始化和其他方法一致
   - 修复动态渲染时无法正确转换 Cookie 格式的问题
   - 相关文件：`src/cookie_manager.py`
+- **内容过滤**：修复爬取器保存低质量和错误页面内容问题
+  - 添加动态渲染内容长度验证和质量检查机制
+  - 实现智能内容过滤，识别并排除404页面、反爬虫页面、订阅页面等
+  - 添加中英文内容数量验证，确保内容质量达标
+  - 清理已保存的错误文件，提高输出数据质量
+  - 相关文件：`src/async_fetcher.py`, `src/fetcher.py`
 
 ### Removed
 - **本地持久化功能**：简化为纯 Redis 模式，移除本地文件存储
