@@ -30,6 +30,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - 添加末尾标点符号清理功能，提高 URL 准确性
   - 修复解析结果从错误数量（8个）恢复到正确数量（4个）
   - 相关文件：`src/parser.py`
+- **属性错误**：修复 CookieManager Redis 属性名称不一致问题
+  - 修复 to_playwright_format() 方法中错误的 self.redis 属性引用
+  - 统一使用 self.redis_client 属性名称，保持与初始化和其他方法一致
+  - 修复动态渲染时无法正确转换 Cookie 格式的问题
+  - 相关文件：`src/cookie_manager.py`
 
 ### Removed
 - **本地持久化功能**：简化为纯 Redis 模式，移除本地文件存储

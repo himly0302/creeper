@@ -360,14 +360,14 @@ class CookieManager:
 
             # 获取所有域名的 cookies
             pattern = f"{self.redis_key_prefix}*"
-            keys = self.redis.keys(pattern)
+            keys = self.redis_client.keys(pattern)
 
             for key in keys:
                 # 跳过 URL 相关的 key（格式为 creeper:cookie:domain）
                 if ':url:' in key:
                     continue
 
-                data = self.redis.get(key)
+                data = self.redis_client.get(key)
                 if data:
                     cookie_data = json.loads(data)
                     cookies = cookie_data.get('cookies', [])
