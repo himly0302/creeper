@@ -181,12 +181,6 @@ COOKIE_STORAGE=redis     # 或 file（传统模式）
 COOKIE_EXPIRE_DAYS=7     # Redis 模式过期天数
 ```
 
-### 本地持久化配置
-```bash
-ENABLE_LOCAL_PERSISTENCE=true
-DEDUP_CACHE_FILE=data/dedup_cache.json
-SYNC_INTERVAL_SECONDS=300  # 定期同步间隔，0 = 禁用
-```
 
 ## 🔧 命令行参数
 

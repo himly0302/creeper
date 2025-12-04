@@ -65,12 +65,7 @@ class Config:
     COOKIE_REDIS_KEY_PREFIX = os.getenv('COOKIE_REDIS_KEY_PREFIX', 'creeper:cookie:')
     INTERACTIVE_LOGIN_TIMEOUT = int(os.getenv('INTERACTIVE_LOGIN_TIMEOUT', 300))  # 交互式登录超时(秒)
 
-    # 本地持久化配置
-    ENABLE_LOCAL_PERSISTENCE = os.getenv('ENABLE_LOCAL_PERSISTENCE', 'true').lower() == 'true'
-    DEDUP_CACHE_FILE = os.getenv('DEDUP_CACHE_FILE', 'data/dedup_cache.json')
-    COOKIE_CACHE_FILE = os.getenv('COOKIE_CACHE_FILE', 'data/cookies_cache.json')
-    SYNC_INTERVAL_SECONDS = int(os.getenv('SYNC_INTERVAL_SECONDS', 300))  # 定期同步间隔(秒, 0=禁用)
-
+    
     # 翻译配置 (使用 DEEPSEEK API)
     ENABLE_TRANSLATION = os.getenv('ENABLE_TRANSLATION', 'false').lower() == 'true'
     DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY', '')

@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Removed
+- **本地持久化功能**：简化为纯 Redis 模式，移除本地文件存储
+  - 删除 ENABLE_LOCAL_PERSISTENCE 配置和相关逻辑
+  - 简化 DedupManager、CookieManager、ModelCapabilityManager
+  - 删除本地缓存文件和相关测试
+  - 相关文件：`src/dedup.py`, `src/cookie_manager.py`, `src/model_capabilities.py`, `src/config.py`
 - **文件夹内容 LLM 整合功能**：完全删除文件整合器及相关功能
   - 删除 aggregator.py 命令行工具
   - 删除 src/file_aggregator.py 核心模块

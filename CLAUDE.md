@@ -77,7 +77,7 @@ pytest tests/test_parser.py
 
 # 手动清理
 redis-cli -n 1 KEYS "creeper:*" | xargs redis-cli -n 1 DEL
-rm -rf output/* outputs/* data/*.json
+rm -rf output/* outputs/*
 rm -f creeper.log
 ```
 
@@ -101,7 +101,7 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 **3. 模块职责**
 
 - `parser.py`: 从 Markdown 提取 H1/H2 层级结构和 URL，输出 `URLItem` 对象
-- `dedup.py`: 基于 Redis 的去重，支持本地文件持久化（混合存储）
+- `dedup.py`: 基于 Redis 的去重
 - `fetcher.py` / `async_fetcher.py`: 网页内容获取，使用 Trafilatura 提取
   - 静态页面: requests + BeautifulSoup
   - 动态页面: Playwright 处理 JS 渲染（自动降级）
@@ -117,10 +117,9 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 
 ### 关键设计模式
 
-**混合存储 (v1.5)**
-- 所有操作同时写入 Redis 和本地 JSON 文件（`data/dedup_cache.json`, `data/cookies_cache.json`）
-- 启动时如果 Redis 为空，从本地文件恢复数据
-- 防止 Redis 重启导致的数据丢失
+**Redis 存储**
+- 所有操作使用 Redis 存储和缓存
+- 支持 TTL 自动过期
 
 **渐进式增强**
 - Fetcher 先尝试静态请求，失败后降级到 Playwright 动态渲染
@@ -134,7 +133,7 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 
 **LLM 模型能力自动探测** (V1.10 新增)
 - 首次调用 LLM 时自动询问模型的 `max_input_tokens` 和 `max_output_tokens`
-- Redis + 本地 JSON 文件混合缓存（`data/model_capabilities.json`）
+- Redis 缓存模型能力信息
 - 探测失败时使用默认值作为回退值
 - 集成到 Translator 模块
 - 开发者规范：新增 LLM 调用模块时，应在 `__init__` 中调用 `ModelCapabilityManager.get_or_detect()`
@@ -145,7 +144,6 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 
 **关键配置项**
 - `CONCURRENCY`: 并发请求数（推荐 5-10）
-- `ENABLE_LOCAL_PERSISTENCE`: Redis 备份到本地文件（默认: true）
 - `ENABLE_TRANSLATION`: 自动翻译英文内容（默认: false，需要 DeepSeek API key）
 - `COOKIE_STORAGE`: `redis`（默认）或 `file`
 - `DOWNLOAD_IMAGES`: 启用图片下载（默认: false）（V1.7 新增）
@@ -173,9 +171,6 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 
 - `src/`: 所有源代码模块
 - `tests/`: 所有测试文件（命名规范: `test_*.py`）
-- `data/`: 本地持久化缓存文件
-  - `data/dedup_cache.json`: URL 去重缓存（混合持久化）
-  - `data/cookies_cache.json`: Cookie 缓存（混合持久化）
     - `docs/`: 需求和设计文档
   - `docs/features/`: 功能需求文档（V1.6 新增）
 - `prompts/`: 提示词模板目录（V1.9 重构）

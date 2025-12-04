@@ -23,7 +23,6 @@ echo "  1. Redis 中所有 'creeper:' 开头的键"
 echo "  3. parsers/ 目录下的所有解析文件"
 echo "  4. aggregators/ 目录下的所有整合文件"
 # echo "  5. creeper.log 日志文件"
-echo "  6. data/ 目录下的所有本地缓存文件"
 echo ""
 read -p "确认继续? (y/N): " -n 1 -r
 echo ""
@@ -160,29 +159,7 @@ else
 fi
 echo ""
 
-# 7. 删除所有本地缓存文件
-echo "🗑️  删除本地缓存文件..."
-CACHE_COUNT=0
-CACHE_FILES=(
-    "data/dedup_cache.json"
-    "data/cookies_cache.json"
-    "data/aggregator_cache.json"
-    "data/parser_cache.json"
-)
-
-for cache_file in "${CACHE_FILES[@]}"; do
-    if [ -f "$cache_file" ]; then
-        rm -f "$cache_file"
-        CACHE_COUNT=$((CACHE_COUNT + 1))
-        echo -e "${GREEN}✓ 已删除 $cache_file${NC}"
-    fi
-done
-
-if [ "$CACHE_COUNT" -eq 0 ]; then
-    echo -e "${GREEN}✓ 没有本地缓存文件${NC}"
-else
-    echo -e "${GREEN}  共删除 $CACHE_COUNT 个本地缓存文件${NC}"
-fi
+# 6. 结束清理
 echo ""
 
 echo "======================================"
