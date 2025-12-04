@@ -13,6 +13,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - 相关文件：`src/storage.py`, `src/image_downloader.py`, `src/async_image_downloader.py`
 
 ### Fixed
+- **内容验证增强**：增强错误页面过滤，同时检查标题和内容
+  - 修复 `_is_valid_content()` 只检查内容不检查标题的问题
+  - 添加 `title` 参数，同时验证标题中的错误指示词
+  - 解决错误信息仅在标题中出现导致页面被错误保存的问题
+  - 相关文件：`src/fetcher.py`, `src/async_fetcher.py`
 - **保存功能错误**：修复 Markdown 生成方法缺少 return 语句导致文件保存失败
   - 修复 `_generate_markdown` 和 `_generate_markdown_async` 方法缺少返回语句
   - 恢复完整的 Markdown 构建逻辑和文件保存功能

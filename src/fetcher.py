@@ -103,8 +103,8 @@ class WebFetcher:
         try:
             page = self._fetch_static(url)
             if page.success and len(page.content) >= config.MIN_TEXT_LENGTH:
-                # 检查内容质量，过滤错误页面
-                if self._is_valid_content(page.content):
+                # 检查内容质量，过滤错误页面（同时检查标题和内容）
+                if self._is_valid_content(page.content, page.title):
                     logger.info(f"✓ 静态爬取成功: {url}")
                     return page
                 else:
@@ -121,8 +121,8 @@ class WebFetcher:
             try:
                 page = self._fetch_dynamic(url)
                 if page.success and len(page.content) >= config.MIN_TEXT_LENGTH:
-                    # 额外检查内容质量
-                    if self._is_valid_content(page.content):
+                    # 额外检查内容质量（同时检查标题和内容）
+                    if self._is_valid_content(page.content, page.title):
                         logger.info(f"✓ 动态渲染成功: {url}")
                         return page
                     else:
@@ -310,17 +310,19 @@ class WebFetcher:
         except Exception:
             return ""
 
-    def _is_valid_content(self, content: str) -> bool:
+    def _is_valid_content(self, content: str, title: str = "") -> bool:
         """
         检查内容是否有效，过滤掉错误页面和低质量内容
 
         Args:
             content: 网页内容
+            title: 网页标题（可选）
 
         Returns:
             True 表示内容有效，False 表示内容无效
         """
         content_lower = content.lower()
+        title_lower = title.lower() if title else ""
 
         # 检查常见的错误页面指示词（中英文）
         error_indicators = [
@@ -373,8 +375,13 @@ class WebFetcher:
         ]
 
         # 如果包含错误指示词，认为内容无效
+        # 同时检查标题和内容
         for indicator in error_indicators:
             if indicator in content_lower:
+                logger.debug(f"内容包含错误指示词: {indicator}")
+                return False
+            if indicator in title_lower:
+                logger.debug(f"标题包含错误指示词: {indicator}")
                 return False
 
         # 检查内容是否太短或主要是重复文字
