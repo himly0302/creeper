@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Removed
+- **文件解析功能**：完全删除文件解析器及相关功能
+  - 删除 parser.py 命令行工具
+  - 删除 src/file_parser.py 核心模块
+  - 删除 9 个解析模板文件
+  - 删除相关测试和文档
+  - 相关文件：`parser.py`, `src/file_parser.py`, `prompts/parser/`, `tests/file_parser/`
+
 ### Changed
 - 📝 **解析模板全面优化**：增强所有 parser 模板的信息保留能力（基于 Gemini 反馈）
 

@@ -10,7 +10,6 @@
 
 - 🚀 **异步并发爬取** - 支持多 URL 并发，速度提升 40-50%
 - 📷 **图片本地化存储** - 自动下载网页中的图片到本地，生成离线可用的文档
-- 🧩 **LLM 文件整合** - 智能扫描文件夹，使用 LLM 生成代码总结/文档合并
 - 🌍 **智能翻译** - 自动识别英文内容并翻译为中文（DeepSeek API）
 - 💾 **混合持久化** - Redis + 本地文件双写，数据安全可靠
 - 🎭 **动态渲染** - 自动降级到 Playwright 处理 JavaScript 页面
@@ -163,23 +162,6 @@ python3 aggregator.py \
 # → 只处理 new_module.py，并更新文档
 ```
 
-### 场景 4: 批量解析文件 (V1.8 新增)
-
-```bash
-# 1. 解析文档文件夹（存储到 parsers/ 目录）
-python parser.py \
-  --input-folder ./inputs/编程/ \
-  --output-folder ./parsers/编程分析/ \
-  --template parser/practical_parser
-
-# 2. 解析代码文件
-python parser.py \
-  --input-folder ./src \
-  --output-folder ./parsers/代码分析/ \
-  --template parser/code_parser \
-  --extensions .py
-```
-
 ## 📁 项目目录约定
 
 ### 核心输出目录
@@ -193,9 +175,6 @@ python parser.py \
   - 按 H1/H2 层级自动组织
   - 图片存储在子目录 `images/`
 
-- **`parsers/`**: 解析文档存放文件夹
-  - 存放 `parser.py` 生成的文档
-  - 每个文件独立解析，一对一输出
 
 - **`aggregators/`**: 融合文档存放文件夹
   - 存放 `aggregator.py` 生成的文档
@@ -357,7 +336,7 @@ ls prompts/
 
 # 或手动清理
 redis-cli -n 1 KEYS "creeper:*" | xargs redis-cli -n 1 DEL
-rm -rf output/* outputs/* parsers/* aggregators/* data/*.json
+rm -rf output/* outputs/* aggregators/* data/*.json
 rm -f creeper.log
 ```
 

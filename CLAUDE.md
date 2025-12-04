@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-Creeper 是一个网页爬虫工具，从 Markdown 文件中提取 URL 并保存为结构化的本地 Markdown 文档。支持同步和异步两种爬取模式，基于 Redis 的去重机制，可选的内容翻译功能。V1.6 新增文件夹内容 LLM 整合功能，V1.7 新增图片本地化存储功能，V1.8 新增文件解析功能，V1.9 重构提示词模板组织结构并新增题材类解析模板。
+Creeper 是一个网页爬虫工具，从 Markdown 文件中提取 URL 并保存为结构化的本地 Markdown 文档。支持同步和异步两种爬取模式，基于 Redis 的去重机制，可选的内容翻译功能。V1.6 新增文件夹内容 LLM 整合功能，V1.7 新增图片本地化存储功能，V1.9 重构提示词模板组织结构并新增题材类解析模板。
 
 **当前版本**: v1.9.2
 
@@ -13,16 +13,12 @@ Creeper 是一个网页爬虫工具，从 Markdown 文件中提取 URL 并保存
 **目录约定**：所有命令行示例必须遵循以下目录结构
 - 输入文件: `inputs/` 目录（如 `inputs/input.md`, `inputs/编程/`）
 - 爬虫输出: `output/` 目录（约定为 `outputs/`，代码中暂未修改）
-- 解析输出: `parsers/` 目录（如 `parsers/编程分析/`）
 - 整合输出: `aggregators/` 目录（如 `aggregators/code_summary.md`）
 
 **命令模板**：
 ```bash
 # 爬虫
 python creeper.py inputs/<文件名>.md
-
-# 文件解析（一对一）
-python parser.py --input-folder ./outputs/<题材> --output-folder ./parsers/<题材>分析 --template parser/<模板>
 
 # 文件整合（多对一）
 python aggregator.py --folder ./src --output ./aggregators/<输出名>.md --template aggregator/<模板>
@@ -82,26 +78,6 @@ python3 aggregator.py --list-templates
 python3 aggregator.py --folder ./src --output ./aggregators/code_summary.md --template aggregator/code_summary --force
 ```
 
-### 运行文件解析 (V1.8 新增)
-```bash
-# 解析文件夹中的所有文件（一对一输出，推荐使用 parser/ 目录下的模板）
-python parser.py --input-folder ./outputs/编程 --output-folder ./parsers/编程分析 --template parser/code_parser
-
-# 仅解析特定类型的文件
-python parser.py --input-folder ./outputs/国际 --output-folder ./parsers/国际分析 --template parser/doc_parser --extensions .md,.txt
-
-# 列出可用模板
-python parser.py --list-templates
-
-# 强制重新处理所有文件（忽略缓存）
-python parser.py --input-folder ./outputs/编程 --output-folder ./parsers/编程分析 --template parser/code_parser --force
-
-# 自定义并发数
-python parser.py --input-folder ./outputs/编程 --output-folder ./parsers/编程分析 --template parser/code_parser --concurrency 10
-
-# 调试模式
-python parser.py --input-folder ./outputs/编程 --output-folder ./parsers/编程分析 --template parser/code_parser --debug
-```
 
 ### 测试
 ```bash
@@ -122,7 +98,7 @@ pytest tests/file_aggregator/
 
 # 手动清理
 redis-cli -n 1 KEYS "creeper:*" | xargs redis-cli -n 1 DEL
-rm -rf output/* outputs/* parsers/* aggregators/* data/*.json
+rm -rf output/* outputs/* aggregators/* data/*.json
 rm -f creeper.log
 ```
 
@@ -163,11 +139,6 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
   - FileScanner: 递归扫描文件夹，计算文件哈希
   - AggregatorCache: 基于 Redis 的增量更新缓存（文件夹级别）
   - LLMAggregator: 批量整合所有文件到单个输出文件
-- `file_parser.py`: 文件解析器（V1.8 新增）
-  - ParserCache: 基于 Redis 的文件级缓存（混合存储）
-  - FileParser: 独立解析每个文件，一对一输出
-  - 保持输入文件夹的相对路径结构
-  - 支持异步并发处理
 
 ### 关键设计模式
 
@@ -190,7 +161,7 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 - 首次调用 LLM 时自动询问模型的 `max_input_tokens` 和 `max_output_tokens`
 - Redis + 本地 JSON 文件混合缓存（`data/model_capabilities.json`）
 - 探测失败时使用配置的 `AGGREGATOR_MAX_TOKENS` 作为回退值
-- 集成到 FileParser、LLMAggregator、Translator 三个模块
+- 集成到 LLMAggregator、Translator 两个模块
 - 开发者规范：新增 LLM 调用模块时，应在 `__init__` 中调用 `ModelCapabilityManager.get_or_detect()`
 
 ## 配置管理
@@ -222,10 +193,6 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
   - 按 H1/H2 层级自动组织目录结构
   - 图片存储在 `outputs/<H1>/<H2>/images/`（如果启用 `DOWNLOAD_IMAGES=true`）
 
-- **`parsers/`**: 解析文档存放文件夹
-  - 存放通过文件解析功能（`parser.py`）生成的文档
-  - 每个文件独立解析，一对一输出
-  - 保持源文件夹的相对路径结构，输出扩展名统一为 `.md`
 
 - **`aggregators/`**: 融合文档存放文件夹
   - 存放通过文件整合功能（`aggregator.py`）生成的文档
@@ -239,11 +206,9 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
   - `data/dedup_cache.json`: URL 去重缓存（混合持久化）
   - `data/cookies_cache.json`: Cookie 缓存（混合持久化）
   - `data/aggregator_cache.json`: 文件整合缓存（V1.6 新增）
-  - `data/parser_cache.json`: 文件解析缓存（V1.8 新增）
-- `docs/`: 需求和设计文档
+  - `docs/`: 需求和设计文档
   - `docs/features/`: 功能需求文档（V1.6 新增）
 - `prompts/`: 提示词模板目录（V1.9 重构）
-  - `prompts/parser/`: 文件解析类模板（一对一输出，9 个模板）
   - `prompts/aggregator/`: 文件整合类模板（多对一输出，8 个模板）
 
 ## 重要实现细节
@@ -277,17 +242,14 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 **添加翻译语言对**: 修改 `translator.py`，更新 langdetect 逻辑
 
 **添加新的提示词模板** (V1.6 新增，V1.9 更新):
-- **模板类型选择**：
-  - 文件解析模板：在 `prompts/parser/` 创建 `.txt` 文件（一对一输出，单个文件分析）
-  - 文件整合模板：在 `prompts/aggregator/` 创建 `.txt` 文件（多对一输出，整合所有文件）
-- **命名规范**：文件名使用 snake_case 命名（如 `code_parser.txt`）
+- **模板创建**：在 `prompts/aggregator/` 创建 `.txt` 文件（多对一输出，整合所有文件）
+- **命名规范**：文件名使用 snake_case 命名（如 `code_summary.txt`）
 - **内容编写**：
   - 模板内容使用中文编写，清晰描述任务和输出要求
-  - 解析模板：禁止包含"整合已有内容"、"合并信息"等增量更新逻辑
-  - 整合模板：建议包含"如果提供了已有内容,请将新信息整合进去"的增量更新逻辑
+  - 建议包含"如果提供了已有内容,请将新信息整合进去"的增量更新逻辑
 - **使用方式**：
-  - 完整路径：`--template parser/code_parser` 或 `--template aggregator/code_summary`
-  - 简化路径：`--template code_parser`（自动在子目录中搜索，如有重名优先使用第一个）
+  - 完整路径：`--template aggregator/code_summary`
+  - 简化路径：`--template code_summary`（自动在子目录中搜索）
 
 ## Git 提交规范
 
