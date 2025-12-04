@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **内容质量控制**：修复静态爬取模式下错误页面被保存的问题
   - 在静态爬取成功分支中添加内容质量验证逻辑
   - 过滤404错误页面、页面不存在提示等低质量内容
+  - 清理Redis缓存中的历史错误页面数据
   - 相关文件：`src/fetcher.py`, `src/async_fetcher.py`
   - 移除已弃用的 `storage_backend`, `cookies_file`, `format` 参数
   - 统一使用 Redis 存储模式，移除文件存储支持
