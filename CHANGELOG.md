@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- **图片下载优化**：智能图片过滤机制，只下载内容清洗后仍然存在的图片
+  - 调整执行顺序：先内容清洗，再提取和下载图片
+  - 双重验证机制：基于最终内容的图片引用验证
+  - 相关文件：`src/storage.py`, `src/image_downloader.py`, `src/async_image_downloader.py`
+
 ### Fixed
 - **配置错误**：修复 CookieManager 初始化参数不匹配问题
   - 移除已弃用的 `storage_backend`, `cookies_file`, `format` 参数

@@ -354,12 +354,12 @@ class AsyncWebFetcher:
         """
         content_lower = content.lower()
 
-        # 检查常见的错误页面指示词
+        # 检查常见的错误页面指示词（中英文）
         error_indicators = [
+            # 中文错误指示词
             "页面不存在",
             "内容不存在",
             "找不到页面",
-            "404",
             "页面未找到",
             "您搜索的内容不存在",
             "已不存在",
@@ -376,7 +376,28 @@ class AsyncWebFetcher:
             "登录",
             "注册",
             "请登录",
-            "需要登录"
+            "需要登录",
+            # 英文错误指示词
+            "page not found",
+            "content not found",
+            "not found",
+            "404",
+            "access denied",
+            "forbidden",
+            "robot check",
+            "verify you are human",
+            "prove you are not a robot",
+            "enable javascript",
+            "enable cookies",
+            "subscribe",
+            "subscription",
+            "login",
+            "sign in",
+            "please login",
+            "authentication required",
+            "privacy policy",
+            "terms of service",
+            "cookie policy"
         ]
 
         # 如果包含错误指示词，认为内容无效

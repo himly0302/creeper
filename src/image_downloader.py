@@ -255,6 +255,80 @@ class ImageDownloader:
 
         return mapping.get(content_type, '.jpg')
 
+    def extract_markdown_images(self, content: str) -> List[str]:
+        """
+        从 Markdown 内容中提取图片 URL（用于智能过滤）
+
+        Args:
+            content: Markdown 文本内容
+
+        Returns:
+            图片 URL 列表（原始 URL，用于去重和验证）
+        """
+        image_urls = []
+        matches = self.IMAGE_PATTERN.findall(content)
+
+        for _, url in matches:
+            url = url.strip()
+            if not url or url.startswith('data:'):
+                continue
+
+            # 处理相对路径（需要 base_url）
+            if self.base_url and not url.startswith(('http://', 'https://')):
+                url = urljoin(self.base_url, url)
+
+            # 只保留 http/https URL
+            if url.startswith(('http://', 'https://')):
+                image_urls.append(url)
+
+        return list(set(image_urls))  # 去重
+
+    def download_valid_images(self, content: str, image_urls: List[str], save_dir: Path) -> str:
+        """
+        只下载指定的有效图片，并替换 Markdown 中的 URL
+
+        Args:
+            content: Markdown 内容
+            image_urls: 需要下载的图片 URL 列表（已去重）
+            save_dir: 图片保存目录（绝对路径）
+
+        Returns:
+            处理后的 Markdown 内容
+        """
+        if not image_urls:
+            logger.debug("没有需要下载的图片")
+            return content
+
+        logger.info(f"开始下载 {len(image_urls)} 张有效图片...")
+
+        # 下载指定的图片
+        download_results = []
+        for url in image_urls:
+            result = self.download_image(url, save_dir)
+            download_results.append((url, result))
+
+        # 替换 Markdown 中的图片 URL
+        processed_content = content
+        success_count = 0
+
+        for original_url, image_info in download_results:
+            if image_info.success:
+                # 在内容中查找并替换所有匹配的 URL
+                # 支持相对路径和绝对路径的匹配
+                for alt_text, markdown_url, resolved_url in self.extract_image_urls(processed_content):
+                    if resolved_url == original_url:
+                        # 使用原始 Markdown 中的 URL 进行替换
+                        old_pattern = f"![{alt_text}]({markdown_url})"
+                        new_pattern = f"![{alt_text}]({image_info.local_path})"
+                        processed_content = processed_content.replace(old_pattern, new_pattern)
+                        success_count += 1
+                        break  # 避免重复替换同一个 URL
+
+        # 统计
+        logger.info(f"✓ 有效图片下载完成: {success_count}/{len(image_urls)} 成功")
+
+        return processed_content
+
     def process_markdown(self, markdown_content: str, save_dir: Path) -> str:
         """
         处理 Markdown 内容：下载图片并替换 URL
@@ -492,6 +566,77 @@ class AsyncImageDownloader:
         }
 
         return mapping.get(content_type, '.jpg')
+
+    def extract_markdown_images(self, content: str) -> List[str]:
+        """
+        从 Markdown 内容中提取图片 URL（用于智能过滤）
+
+        Args:
+            content: Markdown 文本内容
+
+        Returns:
+            图片 URL 列表（原始 URL，用于去重和验证）
+        """
+        image_urls = []
+        matches = self.IMAGE_PATTERN.findall(content)
+
+        for _, url in matches:
+            url = url.strip()
+            if not url or url.startswith('data:'):
+                continue
+
+            # 处理相对路径（需要 base_url）
+            if self.base_url and not url.startswith(('http://', 'https://')):
+                url = urljoin(self.base_url, url)
+
+            # 只保留 http/https URL
+            if url.startswith(('http://', 'https://')):
+                image_urls.append(url)
+
+        return list(set(image_urls))  # 去重
+
+    async def download_valid_images(self, content: str, image_urls: List[str], save_dir: Path) -> str:
+        """
+        异步下载指定的有效图片，并替换 Markdown 中的 URL
+
+        Args:
+            content: Markdown 内容
+            image_urls: 需要下载的图片 URL 列表（已去重）
+            save_dir: 图片保存目录（绝对路径）
+
+        Returns:
+            处理后的 Markdown 内容
+        """
+        if not image_urls:
+            logger.debug("没有需要下载的图片")
+            return content
+
+        logger.info(f"开始异步下载 {len(image_urls)} 张有效图片...")
+
+        # 异步下载指定的图片
+        tasks = [self.download_image(url, save_dir) for url in image_urls]
+        download_results = await asyncio.gather(*tasks)
+
+        # 替换 Markdown 中的图片 URL
+        processed_content = content
+        success_count = 0
+
+        for original_url, image_info in zip(image_urls, download_results):
+            if image_info.success:
+                # 在内容中查找并替换所有匹配的 URL
+                for alt_text, markdown_url, resolved_url in self.extract_image_urls(processed_content):
+                    if resolved_url == original_url:
+                        # 使用原始 Markdown 中的 URL 进行替换
+                        old_pattern = f"![{alt_text}]({markdown_url})"
+                        new_pattern = f"![{alt_text}]({image_info.local_path})"
+                        processed_content = processed_content.replace(old_pattern, new_pattern)
+                        success_count += 1
+                        break  # 避免重复替换同一个 URL
+
+        # 统计
+        logger.info(f"✓ 有效图片异步下载完成: {success_count}/{len(image_urls)} 成功")
+
+        return processed_content
 
     async def process_markdown(self, markdown_content: str, save_dir: Path) -> str:
         """

@@ -3,6 +3,7 @@
 生成目录结构并保存 Markdown 文件
 """
 
+import asyncio
 from pathlib import Path
 from typing import Optional
 
@@ -11,7 +12,7 @@ from .parser import URLItem
 from .cleaner import ContentCleaner
 from .config import config
 from .utils import setup_logger, sanitize_filename, ensure_dir, get_timestamp
-from .image_downloader import ImageDownloader
+from .image_downloader import ImageDownloader, AsyncImageDownloader
 
 logger = setup_logger(__name__)
 
@@ -81,16 +82,62 @@ class StorageManager:
         content = ContentCleaner.clean(page.content)
         description = ContentCleaner.truncate_description(page.description, 300)
 
-        # 处理图片下载（如果启用）
+        # 智能图片下载处理（如果启用）
         if config.DOWNLOAD_IMAGES:
             try:
-                logger.debug("图片下载功能已启用，开始处理图片...")
+                logger.debug("图片下载功能已启用，开始智能处理图片...")
                 downloader = ImageDownloader(base_url=page.url)
                 images_dir = h2_dir / "images"
-                content = downloader.process_markdown(content, images_dir)
+
+                # 从清洗后的内容中提取图片 URL
+                markdown_images = downloader.extract_markdown_images(content)
+
+                if markdown_images:
+                    logger.info(f"从清洗后的内容中发现 {len(markdown_images)} 张图片，开始下载...")
+                    # 只下载在清洗后内容中存在的图片
+                    content = downloader.download_valid_images(content, markdown_images, images_dir)
+                else:
+                    logger.debug("清洗后的内容中没有发现图片，跳过图片下载")
+
                 downloader.close()
             except Exception as e:
-                logger.warning(f"⚠ 图片下载处理失败，将使用原始内容: {e}")
+                logger.warning(f"⚠ 智能图片下载处理失败，将使用原始内容: {e}")
+
+    async def _generate_markdown_async(self, item: URLItem, page: WebPage, h2_dir: Path) -> str:
+        """
+        异步生成 Markdown 文件内容
+
+        Args:
+            item: URL 项目
+            page: 网页数据
+            h2_dir: H2 级目录路径（用于保存图片）
+
+        Returns:
+            Markdown 格式的文件内容
+        """
+        # 清洗内容
+        content = ContentCleaner.clean(page.content)
+        description = ContentCleaner.truncate_description(page.description, 300)
+
+        # 智能异步图片下载处理（如果启用）
+        if config.DOWNLOAD_IMAGES:
+            try:
+                logger.debug("图片下载功能已启用，开始异步智能处理图片...")
+                downloader = AsyncImageDownloader(base_url=page.url)
+                images_dir = h2_dir / "images"
+
+                # 从清洗后的内容中提取图片 URL
+                markdown_images = downloader.extract_markdown_images(content)
+
+                if markdown_images:
+                    logger.info(f"从清洗后的内容中发现 {len(markdown_images)} 张图片，开始异步下载...")
+                    # 异步下载在清洗后内容中存在的图片
+                    content = await downloader.download_valid_images(content, markdown_images, images_dir)
+                else:
+                    logger.debug("清洗后的内容中没有发现图片，跳过图片下载")
+
+            except Exception as e:
+                logger.warning(f"⚠ 智能异步图片下载处理失败，将使用原始内容: {e}")
 
         # 构建 Markdown
         lines = []
@@ -127,6 +174,46 @@ class StorageManager:
         lines.append("*本文由 Creeper 自动爬取并清洗*")
 
         return '\n'.join(lines)
+
+    async def save_async(self, item: URLItem, page: WebPage) -> Optional[Path]:
+        """
+        异步保存网页内容到 Markdown 文件
+
+        Args:
+            item: URL 项目
+            page: 网页数据
+
+        Returns:
+            保存的文件路径
+        """
+        try:
+            # 创建目录结构
+            h1_dir = self.output_dir / sanitize_filename(item.h1)
+            h2_dir = h1_dir / sanitize_filename(item.h2)
+
+            ensure_dir(h2_dir)
+
+            # 生成文件名
+            filename = f"{sanitize_filename(item.h2)}.md"
+            file_path = h2_dir / filename
+
+            # 异步生成 Markdown 内容
+            markdown_content = await self._generate_markdown_async(item, page, h2_dir)
+
+            # 写入文件
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(markdown_content)
+
+            # 更新统计
+            self.stats['total_files'] += 1
+            self.stats['total_size'] += file_path.stat().st_size
+
+            logger.info(f"✓ 文件已保存: {file_path.relative_to(self.output_dir)}")
+            return file_path
+
+        except Exception as e:
+            logger.error(f"保存文件失败: {e}")
+            return None
 
     def save_failed_urls(self, failed_items: list) -> Optional[Path]:
         """
