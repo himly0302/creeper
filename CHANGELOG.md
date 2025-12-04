@@ -17,6 +17,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - 添加 `close()` 方法用于资源清理和连接关闭
   - 修复同步爬虫、异步爬虫、交互式登录功能崩溃
   - 相关文件：`src/dedup.py`
+- **集成错误**：修复 CookieManager 缺少网页爬取器集成方法问题
+  - 添加 `get_cookies_for_url()` 方法支持精确和通配符域名匹配
+  - 添加 `to_playwright_format()` 方法转换 cookie 格式
+  - 添加 `add_cookies_from_requests()` 和 `add_cookies_from_playwright()` 方法
+  - 添加 `set_cookies()` 方法用于覆盖设置 cookies
+  - 修复静态爬取和动态渲染功能失效问题
+  - 相关文件：`src/cookie_manager.py`
 
 ### Removed
 - **本地持久化功能**：简化为纯 Redis 模式，移除本地文件存储
