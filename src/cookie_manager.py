@@ -11,6 +11,7 @@ from datetime import datetime
 import redis
 
 from src.utils import setup_logger
+from src.config import config
 
 logger = setup_logger("creeper.cookie")
 
@@ -76,7 +77,11 @@ class CookieManager:
                 serialized_data
             )
 
-            logger.info(f"Cookie 已保存到 Redis: {domain or 'all'} ({len(cookies)} 个)")
+            # 根据配置决定日志级别
+            if config.VERBOSE_COOKIE_LOGGING:
+                logger.info(f"Cookie 已保存到 Redis: {domain or 'all'} ({len(cookies)} 个)")
+            else:
+                logger.debug(f"Cookie 已保存到 Redis: {domain or 'all'} ({len(cookies)} 个)")
             return True
 
         except Exception as e:
@@ -435,12 +440,14 @@ class CookieManager:
             logger.error(f"从 requests 添加 cookies 失败: {e}")
             return False
 
-    def add_cookies_from_playwright(self, context) -> bool:
+    def add_cookies_from_playwright(self, context, target_domain: str = None, save_third_party: bool = True) -> bool:
         """
         从 Playwright 浏览器上下文添加 cookies
 
         Args:
             context: Playwright 浏览器上下文
+            target_domain: 目标域名（可选，如果提供则只保存该域名相关的 Cookie）
+            save_third_party: 是否保存第三方 Cookie（默认：True）
 
         Returns:
             True 表示成功, False 表示失败
@@ -461,6 +468,17 @@ class CookieManager:
                 # 移除前导点（如果存在）
                 if domain.startswith('.'):
                     domain = domain[1:]
+
+                # 过滤逻辑
+                if target_domain:
+                    # 如果指定了目标域名，只保存目标域名相关的 Cookie
+                    if not self._is_domain_related(domain, target_domain):
+                        continue
+                elif not save_third_party:
+                    # 如果不保存第三方 Cookie，则跳过（需要上下文信息判断）
+                    # 这里简化处理：只保存与目标域名匹配的 Cookie
+                    if target_domain and not domain.endswith(target_domain):
+                        continue
 
                 if domain not in domain_cookies:
                     domain_cookies[domain] = []
@@ -519,3 +537,39 @@ class CookieManager:
         except Exception as e:
             logger.error(f"设置 cookies 失败: {e}")
             return False
+
+    def _is_domain_related(self, cookie_domain: str, target_domain: str) -> bool:
+        """
+        判断 Cookie 域名是否与目标域名相关
+
+        Args:
+            cookie_domain: Cookie 的域名
+            target_domain: 目标域名
+
+        Returns:
+            True 表示相关，False 表示不相关
+        """
+        # 直接匹配
+        if cookie_domain == target_domain:
+            return True
+
+        # 子域名匹配
+        if cookie_domain.endswith('.' + target_domain):
+            return True
+
+        # 父域名匹配（如 gov.cn 相关的 gov.cn 域名）
+        if target_domain.endswith(cookie_domain):
+            return True
+
+        # 重要的公共服务域名
+        public_domains = [
+            'gov.cn', 'edu.cn', 'org.cn', 'com.cn',
+            'wikimedia.org', 'wikipedia.org'
+        ]
+
+        for public_domain in public_domains:
+            if (cookie_domain.endswith(public_domain) and
+                target_domain.endswith(public_domain)):
+                return True
+
+        return False

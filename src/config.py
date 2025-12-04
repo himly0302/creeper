@@ -63,6 +63,11 @@ class Config:
     COOKIE_STORAGE = os.getenv('COOKIE_STORAGE', 'redis')  # 'file' 或 'redis'
     COOKIE_EXPIRE_DAYS = int(os.getenv('COOKIE_EXPIRE_DAYS', 7))  # Cookie 过期天数
     COOKIE_REDIS_KEY_PREFIX = os.getenv('COOKIE_REDIS_KEY_PREFIX', 'creeper:cookie:')
+
+    # Cookie 保存策略配置
+    SAVE_TARGET_DOMAIN_COOKIES_ONLY = os.getenv('SAVE_TARGET_DOMAIN_COOKIES_ONLY', 'false').lower() == 'true'
+    SAVE_THIRD_PARTY_COOKIES = os.getenv('SAVE_THIRD_PARTY_COOKIES', 'true').lower() == 'true'
+    VERBOSE_COOKIE_LOGGING = os.getenv('VERBOSE_COOKIE_LOGGING', 'false').lower() == 'true'
     INTERACTIVE_LOGIN_TIMEOUT = int(os.getenv('INTERACTIVE_LOGIN_TIMEOUT', 300))  # 交互式登录超时(秒)
 
     
