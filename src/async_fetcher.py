@@ -92,14 +92,20 @@ class AsyncWebFetcher:
             try:
                 page = await self._fetch_static(url)
                 if page.success and len(page.content) >= config.MIN_TEXT_LENGTH:
-                    logger.info(f"✓ 静态爬取成功: {url}")
-                    # 调用翻译
-                    if self.translator:
-                        try:
-                            page = await self.translator.translate_webpage(page)
-                        except Exception as e:
-                            logger.error(f"翻译失败(保留原文): {e}")
-                    return page
+                    # 检查内容质量，过滤错误页面
+                    if self._is_valid_content(page.content):
+                        logger.info(f"✓ 静态爬取成功: {url}")
+                        # 调用翻译
+                        if self.translator:
+                            try:
+                                page = await self.translator.translate_webpage(page)
+                            except Exception as e:
+                                logger.error(f"翻译失败(保留原文): {e}")
+                        return page
+                    else:
+                        logger.warning(f"静态爬取内容质量不佳，跳过保存: {url}")
+                        page.success = False
+                        return page
                 else:
                     logger.warning(f"静态爬取内容不足(<{config.MIN_TEXT_LENGTH}字符),尝试动态渲染...")
             except Exception as e:

@@ -103,8 +103,14 @@ class WebFetcher:
         try:
             page = self._fetch_static(url)
             if page.success and len(page.content) >= config.MIN_TEXT_LENGTH:
-                logger.info(f"✓ 静态爬取成功: {url}")
-                return page
+                # 检查内容质量，过滤错误页面
+                if self._is_valid_content(page.content):
+                    logger.info(f"✓ 静态爬取成功: {url}")
+                    return page
+                else:
+                    logger.warning(f"静态爬取内容质量不佳，跳过保存: {url}")
+                    page.success = False
+                    return page
             else:
                 logger.warning(f"静态爬取内容不足(<{config.MIN_TEXT_LENGTH}字符),尝试动态渲染...")
         except Exception as e:
