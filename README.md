@@ -1,6 +1,6 @@
 # Creeper 🕷️
 
-> 智能网页爬虫工具，支持 Markdown URL 批量爬取、LLM 内容整合、自动翻译等功能。
+> 智能网页爬虫工具，支持 Markdown URL 批量爬取、自动翻译等功能。
 
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
 [![Version](https://img.shields.io/badge/version-1.7.0-green)](CHANGELOG.md)
@@ -74,33 +74,6 @@ python creeper.py inputs/input.md  # 在 .env 中设置 ENABLE_TRANSLATION=true
 **3. 查看输出**:
 生成的 Markdown 文档保存在 `output/` 目录（约定名称为 `outputs/`），按 H1/H2 层级组织。
 
-### 文件整合使用 (V1.6 新功能)
-
-扫描文件夹并使用 LLM 生成代码总结或文档合并：
-
-```bash
-# 1. 配置 API Key
-# 在 .env 中设置 AGGREGATOR_API_KEY=sk-your-key-here
-
-# 2. 查看可用模板
-python3 aggregator.py --list-templates
-
-# 3. 生成代码总结（输出到 aggregators/ 目录）
-python3 aggregator.py \
-  --folder ./src \
-  --output ./aggregators/code_summary.md \
-  --template code_summary
-
-# 4. 合并文档
-python3 aggregator.py \
-  --folder ./docs \
-  --output ./aggregators/merged.md \
-  --template doc_merge \
-  --extensions .md,.txt
-```
-
-支持增量更新：再次运行时，只处理新增或变更的文件。
-
 ## 📖 使用场景
 
 ### 场景 1: 爬取技术文档
@@ -144,23 +117,6 @@ python creeper.py inputs/input.md
 # Cookie 自动从 Redis 加载，7 天内有效
 ```
 
-### 场景 3: 代码库文档生成
-
-```bash
-# 1. 扫描 src 目录，生成代码总结（存储到 aggregators/ 目录）
-python3 aggregator.py \
-  --folder ./src \
-  --output ./aggregators/architecture.md \
-  --template code_summary
-
-# 2. 增量更新：添加新文件后再次运行
-touch src/new_module.py
-python3 aggregator.py \
-  --folder ./src \
-  --output ./aggregators/architecture.md \
-  --template code_summary
-# → 只处理 new_module.py，并更新文档
-```
 
 ## 📁 项目目录约定
 
@@ -176,9 +132,6 @@ python3 aggregator.py \
   - 图片存储在子目录 `images/`
 
 
-- **`aggregators/`**: 融合文档存放文件夹
-  - 存放 `aggregator.py` 生成的文档
-  - 多个文件整合为单个输出
 
 ## ⚙️ 配置指南
 
@@ -213,15 +166,6 @@ IMAGE_DOWNLOAD_TIMEOUT=30       # 图片下载超时时间（秒，默认 30）
 
 **说明**：启用后，爬取的网页中的图片会被下载到 `output/<H1>/<H2>/images/` 目录，Markdown 中的图片链接会替换为本地相对路径。
 
-### 文件整合配置 (独立 API)
-```bash
-AGGREGATOR_API_KEY=sk-your-aggregator-key-here
-AGGREGATOR_BASE_URL=https://api.deepseek.com
-AGGREGATOR_MODEL=deepseek-chat
-AGGREGATOR_MAX_TOKENS=8000  # DeepSeek 限制: [1, 8192]
-```
-
-**注意**: 翻译和文件整合使用独立的 API 配置，可以使用不同的 Key 或服务商。
 
 ### LLM 模型能力自动探测 (V1.10 新增)
 ```bash
@@ -229,7 +173,7 @@ ENABLE_MODEL_AUTO_DETECTION=true  # 启用自动探测（默认: true）
 MODEL_DETECTION_TIMEOUT=10        # 探测超时时间（秒，默认: 10）
 ```
 
-**说明**：启用后，首次调用 LLM 时会自动询问模型的 `max_input_tokens` 和 `max_output_tokens`，结果缓存到 Redis 和本地文件。探测失败时使用配置的 `AGGREGATOR_MAX_TOKENS` 作为回退值。
+**说明**：启用后，首次调用 LLM 时会自动询问模型的 `max_input_tokens` 和 `max_output_tokens`，结果缓存到 Redis 和本地文件。探测失败时使用默认值作为回退值。
 
 ### Cookie 管理配置
 ```bash
@@ -258,18 +202,6 @@ python creeper.py [输入文件] [选项]
   --login-url URL        交互式登录
 ```
 
-### 文件整合工具 (aggregator.py)
-```bash
-python3 aggregator.py --folder PATH --output FILE --template NAME [选项]
-
-选项:
-  --folder PATH          要扫描的文件夹
-  --output FILE          输出文件路径
-  --template NAME        模板名称（code_summary/doc_merge/data_analysis）
-  --extensions EXTS      文件类型过滤（默认: .py,.md,.txt）
-  --force                忽略缓存，重新处理所有文件
-  --list-templates       列出所有可用模板
-```
 
 ## 🐛 故障排查
 
@@ -301,32 +233,7 @@ REDIS_PORT=6379
 playwright install chromium
 ```
 
-### Q3: API Key 未配置
 
-**错误**: `未配置 AGGREGATOR_API_KEY`
-
-**解决**:
-```bash
-# 编辑 .env 文件
-AGGREGATOR_API_KEY=sk-your-key-here
-
-# 或使用环境变量
-export AGGREGATOR_API_KEY=sk-your-key-here
-```
-
-### Q4: 文件整合找不到模板
-
-**错误**: `Template 'xxx' not found`
-
-**解决**:
-```bash
-# 列出可用模板
-python3 aggregator.py --list-templates
-
-# 确保 prompts/ 目录下有对应的 .txt 文件
-ls prompts/
-# 应显示: code_summary.txt  doc_merge.txt  data_analysis.txt
-```
 
 ### Q5: 清空测试数据
 
@@ -336,7 +243,7 @@ ls prompts/
 
 # 或手动清理
 redis-cli -n 1 KEYS "creeper:*" | xargs redis-cli -n 1 DEL
-rm -rf output/* outputs/* aggregators/* data/*.json
+rm -rf output/* outputs/* data/*.json
 rm -f creeper.log
 ```
 
@@ -354,7 +261,7 @@ rm -f creeper.log
 | Playwright | 1.51+ | 动态网页渲染 |
 | BeautifulSoup4 | 4.12+ | HTML 解析 |
 | Redis | 6.4+ | 去重和缓存 |
-| OpenAI | 1.0+ | LLM API 调用 |
+| OpenAI | 1.0+ | LLM API 调用（翻译功能）|
 | langdetect | 1.0+ | 语言检测 |
 
 完整依赖列表见 [requirements.txt](requirements.txt)

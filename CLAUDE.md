@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-Creeper 是一个网页爬虫工具，从 Markdown 文件中提取 URL 并保存为结构化的本地 Markdown 文档。支持同步和异步两种爬取模式，基于 Redis 的去重机制，可选的内容翻译功能。V1.6 新增文件夹内容 LLM 整合功能，V1.7 新增图片本地化存储功能，V1.9 重构提示词模板组织结构并新增题材类解析模板。
+Creeper 是一个网页爬虫工具，从 Markdown 文件中提取 URL 并保存为结构化的本地 Markdown 文档。支持同步和异步两种爬取模式，基于 Redis 的去重机制，可选的内容翻译功能。V1.7 新增图片本地化存储功能，V1.9 重构提示词模板组织结构并新增题材类解析模板。
 
 **当前版本**: v1.9.2
 
@@ -13,15 +13,10 @@ Creeper 是一个网页爬虫工具，从 Markdown 文件中提取 URL 并保存
 **目录约定**：所有命令行示例必须遵循以下目录结构
 - 输入文件: `inputs/` 目录（如 `inputs/input.md`, `inputs/编程/`）
 - 爬虫输出: `output/` 目录（约定为 `outputs/`，代码中暂未修改）
-- 整合输出: `aggregators/` 目录（如 `aggregators/code_summary.md`）
-
 **命令模板**：
 ```bash
 # 爬虫
 python creeper.py inputs/<文件名>.md
-
-# 文件整合（多对一）
-python aggregator.py --folder ./src --output ./aggregators/<输出名>.md --template aggregator/<模板>
 ```
 
 ## 开发命令
@@ -63,20 +58,6 @@ python creeper.py --login-url https://example.com/login
 DOWNLOAD_IMAGES=true python creeper.py inputs/input.md
 ```
 
-### 运行文件整合 (V1.6 新增)
-```bash
-# 代码总结（推荐使用 aggregator/ 目录下的模板）
-python3 aggregator.py --folder ./src --output ./aggregators/code_summary.md --template aggregator/code_summary
-
-# 文档合并
-python3 aggregator.py --folder ./docs --output ./aggregators/merged.md --template aggregator/tutorial_merge --extensions .md,.txt
-
-# 列出可用模板
-python3 aggregator.py --list-templates
-
-# 强制重新处理所有文件
-python3 aggregator.py --folder ./src --output ./aggregators/code_summary.md --template aggregator/code_summary --force
-```
 
 
 ### 测试
@@ -87,8 +68,6 @@ pytest tests/
 # 运行特定测试文件
 pytest tests/test_parser.py
 
-# 运行文件整合功能测试
-pytest tests/file_aggregator/
 ```
 
 ### 清理
@@ -98,7 +77,7 @@ pytest tests/file_aggregator/
 
 # 手动清理
 redis-cli -n 1 KEYS "creeper:*" | xargs redis-cli -n 1 DEL
-rm -rf output/* outputs/* aggregators/* data/*.json
+rm -rf output/* outputs/* data/*.json
 rm -f creeper.log
 ```
 
@@ -135,10 +114,6 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
   - 下载图片到 `images/` 子目录
   - 替换 URL 为相对路径
   - 图片去重和安全验证（SSRF 防护）
-- `file_aggregator.py`: 文件夹内容 LLM 整合器（V1.6 新增）
-  - FileScanner: 递归扫描文件夹，计算文件哈希
-  - AggregatorCache: 基于 Redis 的增量更新缓存（文件夹级别）
-  - LLMAggregator: 批量整合所有文件到单个输出文件
 
 ### 关键设计模式
 
@@ -160,8 +135,8 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 **LLM 模型能力自动探测** (V1.10 新增)
 - 首次调用 LLM 时自动询问模型的 `max_input_tokens` 和 `max_output_tokens`
 - Redis + 本地 JSON 文件混合缓存（`data/model_capabilities.json`）
-- 探测失败时使用配置的 `AGGREGATOR_MAX_TOKENS` 作为回退值
-- 集成到 LLMAggregator、Translator 两个模块
+- 探测失败时使用默认值作为回退值
+- 集成到 Translator 模块
 - 开发者规范：新增 LLM 调用模块时，应在 `__init__` 中调用 `ModelCapabilityManager.get_or_detect()`
 
 ## 配置管理
@@ -176,7 +151,6 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 - `DOWNLOAD_IMAGES`: 启用图片下载（默认: false）（V1.7 新增）
 - `MAX_IMAGE_SIZE_MB`: 最大图片大小限制（默认: 10 MB）（V1.7 新增）
 - `IMAGE_DOWNLOAD_TIMEOUT`: 图片下载超时时间（默认: 30 秒）（V1.7 新增）
-- `AGGREGATOR_*`: 文件整合功能配置（V1.6 新增）
 - `ENABLE_MODEL_AUTO_DETECTION`: LLM 模型能力自动探测（默认: true）（V1.10 新增）
 - `MODEL_DETECTION_TIMEOUT`: 模型探测超时时间（默认: 10 秒）（V1.10 新增）
 
@@ -194,9 +168,6 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
   - 图片存储在 `outputs/<H1>/<H2>/images/`（如果启用 `DOWNLOAD_IMAGES=true`）
 
 
-- **`aggregators/`**: 融合文档存放文件夹
-  - 存放通过文件整合功能（`aggregator.py`）生成的文档
-  - 多个文件整合为单个输出文件（如代码总结、文档合并）
 
 ### 其他系统目录
 
@@ -205,11 +176,9 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 - `data/`: 本地持久化缓存文件
   - `data/dedup_cache.json`: URL 去重缓存（混合持久化）
   - `data/cookies_cache.json`: Cookie 缓存（混合持久化）
-  - `data/aggregator_cache.json`: 文件整合缓存（V1.6 新增）
-  - `docs/`: 需求和设计文档
+    - `docs/`: 需求和设计文档
   - `docs/features/`: 功能需求文档（V1.6 新增）
 - `prompts/`: 提示词模板目录（V1.9 重构）
-  - `prompts/aggregator/`: 文件整合类模板（多对一输出，8 个模板）
 
 ## 重要实现细节
 
@@ -241,15 +210,6 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 
 **添加翻译语言对**: 修改 `translator.py`，更新 langdetect 逻辑
 
-**添加新的提示词模板** (V1.6 新增，V1.9 更新):
-- **模板创建**：在 `prompts/aggregator/` 创建 `.txt` 文件（多对一输出，整合所有文件）
-- **命名规范**：文件名使用 snake_case 命名（如 `code_summary.txt`）
-- **内容编写**：
-  - 模板内容使用中文编写，清晰描述任务和输出要求
-  - 建议包含"如果提供了已有内容,请将新信息整合进去"的增量更新逻辑
-- **使用方式**：
-  - 完整路径：`--template aggregator/code_summary`
-  - 简化路径：`--template code_summary`（自动在子目录中搜索）
 
 ## Git 提交规范
 

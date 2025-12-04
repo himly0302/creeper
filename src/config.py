@@ -83,16 +83,6 @@ class Config:
     TRANSLATE_CONTENT = os.getenv('TRANSLATE_CONTENT', 'true').lower() == 'true'
     TRANSLATE_METADATA = os.getenv('TRANSLATE_METADATA', 'false').lower() == 'true'
 
-    # 文件夹内容整合配置 (独立的 LLM API 配置)
-    AGGREGATOR_API_KEY = os.getenv('AGGREGATOR_API_KEY', '')
-    AGGREGATOR_BASE_URL = os.getenv('AGGREGATOR_BASE_URL', 'https://api.deepseek.com')
-    AGGREGATOR_MODEL = os.getenv('AGGREGATOR_MODEL', 'deepseek-chat')
-    AGGREGATOR_CONCURRENCY = int(os.getenv('AGGREGATOR_CONCURRENCY', 1))
-    AGGREGATOR_PROMPTS_DIR = os.getenv('AGGREGATOR_PROMPTS_DIR', 'prompts')
-    AGGREGATOR_MAX_TOKENS = int(os.getenv('AGGREGATOR_MAX_TOKENS', 8000))  # DeepSeek 限制: [1, 8192]
-    AGGREGATOR_MAX_FILE_SIZE = int(os.getenv('AGGREGATOR_MAX_FILE_SIZE', 1048576))  # 1MB
-    AGGREGATOR_TEMPERATURE = float(os.getenv('AGGREGATOR_TEMPERATURE', '0.1'))  # 降低以更严格遵循提示词
-
     # LLM 模型能力自动探测配置
     ENABLE_MODEL_AUTO_DETECTION = os.getenv('ENABLE_MODEL_AUTO_DETECTION', 'true').lower() == 'true'
     MODEL_DETECTION_TIMEOUT = int(os.getenv('MODEL_DETECTION_TIMEOUT', 10))

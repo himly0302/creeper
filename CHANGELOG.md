@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Removed
+- **文件夹内容 LLM 整合功能**：完全删除文件整合器及相关功能
+  - 删除 aggregator.py 命令行工具
+  - 删除 src/file_aggregator.py 核心模块
+  - 删除 8 个整合模板文件
+  - 删除相关测试和文档
+  - 相关文件：`aggregator.py`, `src/file_aggregator.py`, `prompts/aggregator/`, `tests/file_aggregator/`
 - **文件解析功能**：完全删除文件解析器及相关功能
   - 删除 parser.py 命令行工具
   - 删除 src/file_parser.py 核心模块
