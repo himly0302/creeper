@@ -24,6 +24,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - 添加 `set_cookies()` 方法用于覆盖设置 cookies
   - 修复静态爬取和动态渲染功能失效问题
   - 相关文件：`src/cookie_manager.py`
+- **解析错误**：修复 Markdown 解析器 URL 重复提取问题
+  - 修复正则表达式重复匹配 Markdown 链接导致 URL 数量翻倍
+  - 改进 URL 提取逻辑：先处理 Markdown 链接，再处理普通 URL
+  - 添加末尾标点符号清理功能，提高 URL 准确性
+  - 修复解析结果从错误数量（8个）恢复到正确数量（4个）
+  - 相关文件：`src/parser.py`
 
 ### Removed
 - **本地持久化功能**：简化为纯 Redis 模式，移除本地文件存储

@@ -109,19 +109,26 @@ class MarkdownParser:
         """
         urls = []
 
-        # 匹配 Markdown 链接格式 [Title](URL)
+        # 首先匹配 Markdown 链接格式 [Title](URL)
         markdown_pattern = r'\[([^\]]+)\]\((https?://[^\)]+)\)'
         markdown_matches = re.findall(markdown_pattern, line)
         for title, url in markdown_matches:
             urls.append(url.strip())
 
-        # 匹配普通 URL
-        url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
-        plain_matches = re.findall(url_pattern, line)
+        # 移除已经匹配的 Markdown 链接，避免重复提取
+        # 将 [Title](URL) 替换为空字符串
+        line_without_markdown = re.sub(markdown_pattern, '', line)
+
+        # 在剩余的文本中匹配普通 URL（更严格的模式）
+        # 这个模式会排除右括号，避免匹配到 Markdown 链接内的 URL
+        url_pattern = r'https?://[^\s<>"{}|\\^`\[\]\)\)]+'
+        plain_matches = re.findall(url_pattern, line_without_markdown)
         for url in plain_matches:
-            # 避免重复添加(已被 Markdown 格式匹配的)
-            if url not in urls:
-                urls.append(url.strip())
+            url = url.strip()
+            # 移除末尾可能残留的标点符号
+            url = url.rstrip('.,;:!?')
+            if url and url not in urls:
+                urls.append(url)
 
         return urls
 
