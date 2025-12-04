@@ -35,16 +35,21 @@ class SyncCrawler(BaseCrawler):
         """初始化同步爬虫"""
         super().__init__(args)
 
-        # 初始化 Cookie 管理器 (仅文件模式)
-        if args.cookies_file:
-            self.cookie_manager = CookieManager(
-                cookies_file=args.cookies_file,
-                format='json'
-            )
-            logger.info(f"已启用 Cookie 管理,文件: {args.cookies_file}")
+        # 初始化 Cookie 管理器
+        self.cookie_manager = CookieManager(
+            redis_client=None,  # 延迟初始化
+            redis_key_prefix=config.COOKIE_REDIS_KEY_PREFIX,
+            expire_days=config.COOKIE_EXPIRE_DAYS
+        )
+        logger.info(f"已启用 Cookie 管理(Redis 模式),过期时间: {config.COOKIE_EXPIRE_DAYS} 天")
 
         # 初始化各个模块
         self.dedup = DedupManager()
+
+        # 设置 cookie_manager 的 redis_client
+        if self.cookie_manager:
+            self.cookie_manager.redis_client = self.dedup.redis
+
         self.fetcher = WebFetcher(
             use_playwright=not args.no_playwright,
             cookie_manager=self.cookie_manager
@@ -169,33 +174,20 @@ class AsyncCrawler(BaseCrawler):
         """初始化异步爬虫"""
         super().__init__(args)
 
-        # 初始化 Cookie 管理器
-        if args.cookies_file:
-            # 使用文件存储模式(向后兼容)
-            self.cookie_manager = CookieManager(
-                cookies_file=args.cookies_file,
-                format='json',
-                storage_backend='file'
-            )
-            logger.info(f"已启用 Cookie 管理(文件模式),文件: {args.cookies_file}")
-        elif config.COOKIE_STORAGE == 'redis':
-            # 使用 Redis 存储模式
-            self.cookie_manager = CookieManager(
-                storage_backend='redis',
-                redis_client=None,  # 延迟初始化
-                redis_key_prefix=config.COOKIE_REDIS_KEY_PREFIX,
-                expire_days=config.COOKIE_EXPIRE_DAYS
-            )
-            logger.info(f"已启用 Cookie 管理(Redis 模式),过期时间: {config.COOKIE_EXPIRE_DAYS} 天")
+        # 初始化 Cookie 管理器 (仅支持 Redis 模式)
+        self.cookie_manager = CookieManager(
+            redis_client=None,  # 延迟初始化
+            redis_key_prefix=config.COOKIE_REDIS_KEY_PREFIX,
+            expire_days=config.COOKIE_EXPIRE_DAYS
+        )
+        logger.info(f"已启用 Cookie 管理(Redis 模式),过期时间: {config.COOKIE_EXPIRE_DAYS} 天")
 
         # 初始化各个模块
         self.dedup = DedupManager()
 
-        # 如果 cookie_manager 使用 Redis 模式,传入 redis_client
-        if self.cookie_manager and self.cookie_manager.storage_backend == 'redis':
+        # 设置 cookie_manager 的 redis_client
+        if self.cookie_manager:
             self.cookie_manager.redis_client = self.dedup.redis
-            # 重新加载 Cookie
-            self.cookie_manager._load_all_from_redis()
 
         self.fetcher = AsyncWebFetcher(
             use_playwright=not args.no_playwright,
@@ -338,17 +330,16 @@ async def do_interactive_login(args):
         dedup = DedupManager()
 
         cookie_manager = CookieManager(
-            storage_backend='redis',
             redis_client=dedup.redis,
             redis_key_prefix=config.COOKIE_REDIS_KEY_PREFIX,
             expire_days=config.COOKIE_EXPIRE_DAYS
         )
 
         # 保存 Cookie
+        success = True
         for domain, cookies in domain_cookies.items():
-            cookie_manager.set_cookies(domain, cookies)
-
-        success = cookie_manager.save()
+            if not cookie_manager.save(cookies, domain):
+                success = False
 
         if success:
             logger.info("=" * 60)

@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **配置错误**：修复 CookieManager 初始化参数不匹配问题
+  - 移除已弃用的 `storage_backend`, `cookies_file`, `format` 参数
+  - 统一使用 Redis 存储模式，移除文件存储支持
+  - 修复方法调用：使用 `save()` 替代 `set_cookies()`
+  - 相关文件：`creeper.py`
+
 ### Removed
 - **本地持久化功能**：简化为纯 Redis 模式，移除本地文件存储
   - 删除 ENABLE_LOCAL_PERSISTENCE 配置和相关逻辑
