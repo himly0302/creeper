@@ -12,6 +12,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - 统一使用 Redis 存储模式，移除文件存储支持
   - 修复方法调用：使用 `save()` 替代 `set_cookies()`
   - 相关文件：`creeper.py`
+- **API 错误**：修复 DedupManager 缺少关键方法问题
+  - 添加 `test_connection()` 方法用于 Redis 连接健康检查
+  - 添加 `close()` 方法用于资源清理和连接关闭
+  - 修复同步爬虫、异步爬虫、交互式登录功能崩溃
+  - 相关文件：`src/dedup.py`
 
 ### Removed
 - **本地持久化功能**：简化为纯 Redis 模式，移除本地文件存储

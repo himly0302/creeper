@@ -158,6 +158,35 @@ class DedupManager:
                 "error": str(e)
             }
 
+    def test_connection(self) -> bool:
+        """
+        测试 Redis 连接
+
+        Returns:
+            True 表示连接正常, False 表示连接失败
+        """
+        try:
+            # 使用 ping 命令测试连接
+            result = self.redis.ping()
+            return bool(result)
+        except Exception as e:
+            logger.error(f"Redis 连接测试失败: {e}")
+            return False
+
+    def close(self):
+        """
+        关闭 Redis 连接
+        """
+        try:
+            if hasattr(self.redis, 'close'):
+                self.redis.close()
+            elif hasattr(self.redis, 'connection_pool'):
+                # 关闭连接池
+                self.redis.connection_pool.disconnect()
+            logger.debug("Redis 连接已关闭")
+        except Exception as e:
+            logger.error(f"关闭 Redis 连接失败: {e}")
+
     def clear_all(self) -> bool:
         """
         清空所有去重数据
