@@ -13,6 +13,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - 相关文件：`src/storage.py`, `src/image_downloader.py`, `src/async_image_downloader.py`
 
 ### Fixed
+- **保存功能错误**：修复 Markdown 生成方法缺少 return 语句导致文件保存失败
+  - 修复 `_generate_markdown` 和 `_generate_markdown_async` 方法缺少返回语句
+  - 恢复完整的 Markdown 构建逻辑和文件保存功能
+  - 相关文件：`src/storage.py`
 - **配置错误**：修复 CookieManager 初始化参数不匹配问题
   - 移除已弃用的 `storage_backend`, `cookies_file`, `format` 参数
   - 统一使用 Redis 存储模式，移除文件存储支持

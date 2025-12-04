@@ -103,6 +103,42 @@ class StorageManager:
             except Exception as e:
                 logger.warning(f"⚠ 智能图片下载处理失败，将使用原始内容: {e}")
 
+        # 构建 Markdown
+        lines = []
+
+        # 标题
+        lines.append(f"# {page.title}")
+        lines.append("")
+
+        # 元信息
+        lines.append(f"> 📅 **爬取时间**: {page.crawled_at}")
+        lines.append(f"> 🔗 **来源链接**: {page.url}")
+
+        if description:
+            lines.append(f"> 📝 **网页描述**: {description}")
+
+        if page.author:
+            lines.append(f"> ✍️ **作者**: {page.author}")
+
+        if page.published_date:
+            lines.append(f"> 📆 **发布时间**: {page.published_date}")
+
+        lines.append(f"> 🎯 **爬取方式**: {'动态渲染' if page.method == 'dynamic' else '静态爬取'}")
+        lines.append("")
+        lines.append("---")
+        lines.append("")
+
+        # 主体内容
+        lines.append(content)
+        lines.append("")
+        lines.append("---")
+        lines.append("")
+
+        # 页脚
+        lines.append("*本文由 Creeper 自动爬取并清洗*")
+
+        return '\n'.join(lines)
+
     async def _generate_markdown_async(self, item: URLItem, page: WebPage, h2_dir: Path) -> str:
         """
         异步生成 Markdown 文件内容
