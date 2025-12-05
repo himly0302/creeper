@@ -14,6 +14,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - 相关文件：`src/url_list_mode.py`, `src/cli_parser.py`, `creeper.py`
 
 ### Fixed
+- **内容验证优化**：修复"does not exist"错误指示词误判问题
+  - 移除过于宽泛的"does not exist"指示词，避免误判正常技术文档
+  - 保留更精确的错误指示词如"does not exist, or no longer exists"
+  - 移除"subscribe"、"subscription"、"login"、"sign in"等常见功能性词汇
+  - 相关文件：`src/async_fetcher.py`, `src/fetcher.py`
+- **依赖支持**：安装Brotli库支持静态爬取brotli压缩内容
+  - 解决静态爬取失败问题："Can not decode content-encoding: brotli (br)"
+  - 提升对现代网站压缩格式的兼容性
+  - 相关文件：requirements.txt (通过pip install brotli)
 - **内容验证**：修复"javascript"错误指示词误判问题
   - 将过于宽泛的"javascript"指示词改为更精确的"请确保您的浏览器支持javascript"
   - 将"enable javascript"改为"please enable javascript"避免误判正常脚本

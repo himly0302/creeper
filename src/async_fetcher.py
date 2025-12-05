@@ -386,7 +386,6 @@ class AsyncWebFetcher:
             "page not found",
             "content not found",
             "not found",
-            "does not exist",
             "does not exist, or no longer exists",
             "no longer exists",
             "the content you are searching",
