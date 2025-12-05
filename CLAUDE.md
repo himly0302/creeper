@@ -15,8 +15,11 @@ Creeper 是一个网页爬虫工具，从 Markdown 文件中提取 URL 并保存
 - 爬虫输出: `output/` 目录（约定为 `outputs/`，代码中暂未修改）
 **命令模板**：
 ```bash
-# 爬虫
+# 爬虫 - Markdown文件模式
 python creeper.py inputs/<文件名>.md
+
+# URL列表模式 - 直接输入URL
+python creeper.py --urls "URL1,URL2,URL3"
 ```
 
 ## 开发命令
@@ -54,8 +57,20 @@ python creeper.py inputs/input.md --force
 # 交互式登录（用于需要认证的网站）
 python creeper.py --login-url https://example.com/login
 
-# 启用图片下载
+# URL列表模式
+python creeper.py --urls "https://example1.com,https://example2.com"
+
+# URL列表模式 + 并发数设置
+python creeper.py --urls "URL1,URL2" -c 10
+
+# URL列表模式 + 调试
+python creeper.py --urls "URL1,URL2" --debug
+
+# 启用图片下载（注意：图片下载功能只适用于Markdown输出模式）
 DOWNLOAD_IMAGES=true python creeper.py inputs/input.md
+
+# URL列表模式（图片下载功能不适用，因为输出的是JSON）
+python creeper.py --urls "URL1,URL2"
 ```
 
 
@@ -67,6 +82,9 @@ pytest tests/
 
 # 运行特定测试文件
 pytest tests/test_parser.py
+
+# 运行URL列表模式测试
+pytest tests/test_url_list_mode/
 
 ```
 

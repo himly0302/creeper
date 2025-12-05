@@ -9,6 +9,7 @@
 ## ✨ 核心特性
 
 - 🚀 **异步并发爬取** - 支持多 URL 并发，速度提升 40-50%
+- 📋 **URL列表模式** - 支持直接输入URL列表，输出JSON格式数据
 - 📷 **图片本地化存储** - 自动下载网页中的图片到本地，生成离线可用的文档
 - 🌍 **智能翻译** - 自动识别英文内容并翻译为中文（DeepSeek API）
 - 💾 **混合持久化** - Redis + 本地文件双写，数据安全可靠
@@ -74,6 +75,41 @@ python creeper.py inputs/input.md  # 在 .env 中设置 ENABLE_TRANSLATION=true
 **3. 查看输出**:
 生成的 Markdown 文档保存在 `output/` 目录（约定名称为 `outputs/`），按 H1/H2 层级组织。
 
+### URL列表模式 - 直接爬取URL
+
+**1. 直接输入URL列表**:
+```bash
+# 单个URL
+python creeper.py --urls "https://example.com"
+
+# 多个URL（逗号分隔）
+python creeper.py --urls "https://example1.com,https://example2.com"
+
+# 设置并发数
+python creeper.py --urls "URL1,URL2" -c 10
+
+# 调试模式
+python creeper.py --urls "URL1,URL2" --debug
+```
+
+**2. 输出格式**:
+```json
+[
+  {
+    "title": "页面标题",
+    "summary": "页面描述",
+    "content": "页面正文内容",
+    "url": "https://example.com"
+  }
+]
+```
+
+**特点**：
+- 🚀 **快速便捷**：无需准备Markdown文件，直接输入URL
+- 📊 **JSON格式**：结构化数据输出，便于程序处理
+- 🔄 **强制刷新**：每次都重新爬取，获取最新内容
+- ⚡ **高性能**：异步并发处理，支持批量URL
+
 ## 📖 使用场景
 
 ### 场景 1: 爬取技术文档
@@ -105,7 +141,20 @@ output/
         └── Introduction.md
 ```
 
-### 场景 2: 需要登录的网站
+### 场景 2: URL列表模式批量处理
+
+```bash
+# 批量获取多个网站的API文档
+python creeper.py --urls "https://docs.python.org/3/,https://requests.readthedocs.io/en/latest/,https://flask.palletsprojects.com/"
+
+# 获取新闻文章（使用JSON格式便于后续处理）
+python creeper.py --urls "https://news.ycombinator.com/frontpage,https://techcrunch.com" | jq '.[] | {title, url}'
+
+# 快速验证多个URL的可访问性
+python creeper.py --urls "URL1,URL2,URL3" --debug
+```
+
+### 场景 3: 需要登录的网站
 
 ```bash
 # 1. 交互式登录
@@ -185,15 +234,26 @@ COOKIE_EXPIRE_DAYS=7     # Redis 模式过期天数
 ## 🔧 命令行参数
 
 ### 爬虫工具 (creeper.py)
+
+#### Markdown文件模式
 ```bash
 python creeper.py [输入文件] [选项]
+```
 
+#### URL列表模式
+```bash
+python creeper.py --urls "URL1,URL2" [选项]
+```
+
+#### 选项说明
+```bash
 选项:
   -c, --concurrency N    并发数（默认: 5）
   --sync                 使用同步模式
   --force                忽略去重，强制重新爬取
   --debug                调试模式
   --login-url URL        交互式登录
+  --urls URLS            URL列表模式，用逗号分隔
 ```
 
 
