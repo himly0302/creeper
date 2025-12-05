@@ -105,6 +105,7 @@ class AsyncWebFetcher:
                     else:
                         logger.warning(f"静态爬取内容质量不佳，跳过保存: {url}")
                         page.success = False
+                        page.error = "内容质量检查未通过，可能包含错误页面指示词或内容过短"
                         return page
                 else:
                     logger.warning(f"静态爬取内容不足(<{config.MIN_TEXT_LENGTH}字符),尝试动态渲染...")
@@ -129,10 +130,12 @@ class AsyncWebFetcher:
                         else:
                             logger.warning(f"动态渲染内容质量不佳，跳过保存: {url}")
                             page.success = False
+                            page.error = "内容质量检查未通过，可能包含错误页面指示词或内容过短"
                             return page
                     elif page.success:
                         logger.warning(f"动态渲染内容不足(<{config.MIN_TEXT_LENGTH}字符),跳过保存: {url}")
                         page.success = False
+                        page.error = f"动态渲染内容过短({len(page.content)}字符 < {config.MIN_TEXT_LENGTH}字符)"
                         return page
                 except Exception as e:
                     logger.error(f"动态渲染失败: {e}")
@@ -377,7 +380,7 @@ class AsyncWebFetcher:
             "请点击下方方框",
             "证明您不是机器人",
             "请确保您的浏览器支持",
-            "javascript",
+            "请确保您的浏览器支持javascript",
             "cookie 功能",
             "订阅",
             "立即订阅",
@@ -399,7 +402,7 @@ class AsyncWebFetcher:
             "robot check",
             "verify you are human",
             "prove you are not a robot",
-            "enable javascript",
+            "please enable javascript",
             "enable cookies",
             "subscribe",
             "subscription",

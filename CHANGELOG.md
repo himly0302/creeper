@@ -12,6 +12,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - 每次强制重新查询（类似 --force 行为）
   - 支持异步并发处理，提升效率
   - 相关文件：`src/url_list_mode.py`, `src/cli_parser.py`, `creeper.py`
+
+### Fixed
+- **内容验证**：修复"javascript"错误指示词误判问题
+  - 将过于宽泛的"javascript"指示词改为更精确的"请确保您的浏览器支持javascript"
+  - 将"enable javascript"改为"please enable javascript"避免误判正常脚本
+  - 同步和异步版本均已修复
+  - 改进错误信息显示，提供详细的失败原因
+  - 相关文件：`src/async_fetcher.py`, `src/fetcher.py`
 - **图片下载优化**：智能图片过滤机制，只下载内容清洗后仍然存在的图片
   - 调整执行顺序：先内容清洗，再提取和下载图片
   - 双重验证机制：基于最终内容的图片引用验证
