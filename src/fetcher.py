@@ -344,12 +344,6 @@ class WebFetcher:
             "请确保您的浏览器支持",
             "请确保您的浏览器支持javascript",
             "cookie 功能",
-            "订阅",
-            "立即订阅",
-            "登录",
-            "注册",
-            "请登录",
-            "需要登录",
             # 英文错误指示词
             "page not found",
             "content not found",
@@ -365,16 +359,7 @@ class WebFetcher:
             "verify you are human",
             "prove you are not a robot",
             "please enable javascript",
-            "enable cookies",
-            "subscribe",
-            "subscription",
-            "login",
-            "sign in",
-            "please login",
-            "authentication required",
-            "privacy policy",
-            "terms of service",
-            "cookie policy"
+            "enable cookies"
         ]
 
         # 如果包含错误指示词，认为内容无效

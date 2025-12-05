@@ -382,12 +382,6 @@ class AsyncWebFetcher:
             "请确保您的浏览器支持",
             "请确保您的浏览器支持javascript",
             "cookie 功能",
-            "订阅",
-            "立即订阅",
-            "登录",
-            "注册",
-            "请登录",
-            "需要登录",
             # 英文错误指示词
             "page not found",
             "content not found",
@@ -403,30 +397,23 @@ class AsyncWebFetcher:
             "verify you are human",
             "prove you are not a robot",
             "please enable javascript",
-            "enable cookies",
-            "subscribe",
-            "subscription",
-            "login",
-            "sign in",
-            "please login",
-            "authentication required",
-            "privacy policy",
-            "terms of service",
-            "cookie policy"
+            "enable cookies"
         ]
 
         # 如果包含错误指示词，认为内容无效
         # 同时检查标题和内容
         for indicator in error_indicators:
             if indicator in content_lower:
-                logger.debug(f"内容包含错误指示词: {indicator}")
+                logger.debug(f"内容包含错误指示词: '{indicator}'")
                 return False
             if indicator in title_lower:
-                logger.debug(f"标题包含错误指示词: {indicator}")
+                logger.debug(f"标题包含错误指示词: '{indicator}'")
                 return False
 
         # 检查内容是否太短或主要是重复文字
-        if len(content.strip()) < 200:
+        content_length = len(content.strip())
+        if content_length < 200:
+            logger.debug(f"内容过短: {content_length} 字符 < 200 字符")
             return False
 
         # 检查是否包含足够的中文字符或英文内容
@@ -435,6 +422,7 @@ class AsyncWebFetcher:
 
         # 如果中文字符少于50个且英文字符少于100个，可能内容质量不高
         if chinese_chars < 50 and english_chars < 100:
+            logger.debug(f"字符数不足: 中文 {chinese_chars} 字符 < 50, 英文 {english_chars} 字符 < 100")
             return False
 
         return True
