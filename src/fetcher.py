@@ -353,7 +353,6 @@ class WebFetcher:
             "the content you are searching",
             "404",
             "access denied",
-            "forbidden",
             "robot check",
             "verify you are human",
             "prove you are not a robot",
