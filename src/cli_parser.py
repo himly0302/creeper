@@ -27,18 +27,27 @@ def create_argument_parser():
   %(prog)s input.md --force            # 强制重新爬取
   %(prog)s input.md --no-playwright    # 禁用 Playwright
   %(prog)s --login-url URL             # 交互式登录
+  %(prog)s --urls "URL1,URL2"          # URL列表模式，输出JSON
 
 更多信息: https://github.com/your-repo/creeper
         """
     )
 
-    # 输入文件 (可选,支持 --login-url 模式)
+    # 输入文件 (可选,支持 --login-url 和 --urls 模式)
     parser.add_argument(
         'input_file',
         type=str,
         nargs='?',
         default=None,
         help='Markdown 输入文件路径'
+    )
+
+    # URL列表模式
+    parser.add_argument(
+        '--urls',
+        type=str,
+        default=None,
+        help='直接输入URL列表，用逗号分隔。输出JSON格式数据到控制台'
     )
 
     # 输出目录

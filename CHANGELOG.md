@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- **CLI**：新增 --urls 参数支持直接输入URL列表
+  - 接受逗号分隔的URL，输出JSON格式结构化数据到控制台
+  - 每次强制重新查询（类似 --force 行为）
+  - 支持异步并发处理，提升效率
+  - 相关文件：`src/url_list_mode.py`, `src/cli_parser.py`, `creeper.py`
 - **图片下载优化**：智能图片过滤机制，只下载内容清洗后仍然存在的图片
   - 调整执行顺序：先内容清洗，再提取和下载图片
   - 双重验证机制：基于最终内容的图片引用验证

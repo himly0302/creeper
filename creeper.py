@@ -385,9 +385,27 @@ def main():
         success = asyncio.run(do_interactive_login(args))
         sys.exit(0 if success else 1)
 
+    # 处理URL列表模式
+    if args.urls:
+        # URL列表模式必须是异步模式
+        if args.sync:
+            logger.error("URL列表模式不支持同步模式，请移除 --sync 参数")
+            sys.exit(1)
+
+        # 导入URL列表模式模块
+        from src.url_list_mode import run_url_list_mode
+
+        # 运行URL列表模式
+        asyncio.run(run_url_list_mode(
+            url_string=args.urls,
+            concurrency=args.concurrency,
+            use_playwright=not args.no_playwright
+        ))
+        return
+
     # 检查输入文件
     if not args.input_file:
-        logger.error("错误: 必须提供输入文件或使用 --login-url 进行登录")
+        logger.error("错误: 必须提供输入文件，或使用 --urls 或 --login-url 参数")
         sys.exit(1)
 
     if not Path(args.input_file).exists():
