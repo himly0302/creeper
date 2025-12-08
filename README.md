@@ -3,7 +3,7 @@
 > 智能网页爬虫工具，支持 Markdown URL 批量爬取、自动翻译等功能。
 
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
-[![Version](https://img.shields.io/badge/version-1.7.0-green)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.0.0-green)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 ## ✨ 核心特性

@@ -121,7 +121,7 @@ def create_argument_parser():
     parser.add_argument(
         '-v', '--version',
         action='version',
-        version='Creeper 1.3.0'
+        version='Creeper 2.0.0'
     )
 
     return parser

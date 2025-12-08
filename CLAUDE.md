@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Creeper 是一个网页爬虫工具，从 Markdown 文件中提取 URL 并保存为结构化的本地 Markdown 文档。支持异步并发爬取模式，基于 Redis 的去重机制，可选的内容翻译功能。V1.7 新增图片本地化存储功能，V1.9 重构提示词模板组织结构并新增题材类解析模板。
 
-**当前版本**: v1.9.2
+**当前版本**: v2.0.0
 
 ## 📋 命令行使用规则
 

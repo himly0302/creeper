@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Creeper v1.3.0 - 网页爬虫工具
+Creeper v2.0.0 - 网页爬虫工具
 将 Markdown 文件中的 URL 批量爬取并保存为结构化的本地 Markdown 文档
 
 支持异步模式 (默认): 高性能并发爬取
@@ -60,7 +60,7 @@ class AsyncCrawler(BaseCrawler):
         """运行异步爬虫"""
         try:
             logger.info("=" * 60)
-            logger.info(f"Creeper v1.3.0 - 异步并发模式")
+            logger.info(f"Creeper v2.0.0 - 异步并发模式")
             logger.info("=" * 60)
 
             # 1. 解析 Markdown 文件
