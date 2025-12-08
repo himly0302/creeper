@@ -56,11 +56,8 @@ https://developer.mozilla.org/zh-CN/docs/Web
 
 **2. 运行爬虫**:
 ```bash
-# 异步模式（推荐）
+# 异步模式（默认）
 python creeper.py inputs/input.md
-
-# 同步模式
-python creeper.py inputs/input.md --sync
 
 # 自定义并发数
 python creeper.py inputs/input.md -c 10
@@ -267,7 +264,6 @@ python creeper.py --urls "URL1,URL2" --with-images
 ```bash
 选项:
   -c, --concurrency N    并发数（默认: 5）
-  --sync                 使用同步模式
   --force                忽略去重，强制重新爬取
   --debug                调试模式
   --login-url URL        交互式登录

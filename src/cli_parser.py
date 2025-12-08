@@ -1,6 +1,6 @@
 """
 CLI 参数解析模块
-统一管理同步和异步版本的命令行参数
+管理异步版本的命令行参数
 """
 
 import argparse
@@ -15,13 +15,12 @@ def create_argument_parser():
         argparse.ArgumentParser: 配置好的参数解析器
     """
     parser = argparse.ArgumentParser(
-        description='Creeper - 网页爬虫工具 (支持同步/异步模式)',
+        description='Creeper - 网页爬虫工具',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
-  %(prog)s input.md                    # 异步模式(默认,推荐)
+  %(prog)s input.md                    # 异步模式
   %(prog)s input.md -c 10              # 设置并发数为 10
-  %(prog)s input.md --sync             # 使用同步模式
   %(prog)s input.md -o ./output        # 指定输出目录
   %(prog)s input.md --debug            # 开启调试模式
   %(prog)s input.md --force            # 强制重新爬取
@@ -70,7 +69,7 @@ def create_argument_parser():
         '-c', '--concurrency',
         type=int,
         default=config.CONCURRENCY,
-        help=f'并发数 (默认: {config.CONCURRENCY}, 同步模式下忽略)'
+        help=f'并发数 (默认: {config.CONCURRENCY})'
     )
 
     # 强制重新爬取
@@ -114,16 +113,10 @@ def create_argument_parser():
         '--login-url',
         type=str,
         default=None,
-        help='需要登录的 URL,启动交互式登录流程(仅异步模式)'
+        help='需要登录的 URL,启动交互式登录流程'
     )
 
-    # 同步模式 (新增)
-    parser.add_argument(
-        '--sync',
-        action='store_true',
-        help='使用同步模式(默认: 异步模式)'
-    )
-
+  
     # 版本信息
     parser.add_argument(
         '-v', '--version',

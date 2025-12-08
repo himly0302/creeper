@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+- **架构**：移除同步爬虫模式，统一使用异步模式
+  - 删除 `SyncCrawler` 类和 `--sync` 选项
+  - 移除 `src/fetcher.py`，统一使用 `AsyncWebFetcher`
+  - 删除同步图片下载器，只保留 `AsyncImageDownloader`
+  - 简化项目结构，减少代码维护成本
+  - 相关文件：`creeper.py`, `src/cli_parser.py`, `src/base_crawler.py`, `src/image_downloader.py`
+
+### Removed
+- **功能**：同步爬虫模式
+  - 原因：简化代码结构，专注优化异步模式性能
+  - 影响：移除 `--sync` 参数，所有命令默认使用异步模式
+  - 相关文件：删除 `src/fetcher.py`, `tests/image_downloader/test_sync_downloader.py`
+- **CLI参数**：`--sync` 选项
+  - 原因：同步模式已移除，参数不再需要
+  - 替代方案：所有操作默认使用异步并发模式
+
 ### Added
 - **CLI**：新增 `--with-images` 参数，在 `--urls` 模式下提取页面图片链接
   - 必须配合 `--urls` 使用，输出 JSON 中新增 `images` 字段

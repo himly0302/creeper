@@ -1,6 +1,6 @@
 """
 BaseCrawler - 爬虫基类
-提供同步和异步版本的公共逻辑
+提供异步版本的公共逻辑
 """
 
 from abc import ABC, abstractmethod

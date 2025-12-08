@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-Creeper 是一个网页爬虫工具，从 Markdown 文件中提取 URL 并保存为结构化的本地 Markdown 文档。支持同步和异步两种爬取模式，基于 Redis 的去重机制，可选的内容翻译功能。V1.7 新增图片本地化存储功能，V1.9 重构提示词模板组织结构并新增题材类解析模板。
+Creeper 是一个网页爬虫工具，从 Markdown 文件中提取 URL 并保存为结构化的本地 Markdown 文档。支持异步并发爬取模式，基于 Redis 的去重机制，可选的内容翻译功能。V1.7 新增图片本地化存储功能，V1.9 重构提示词模板组织结构并新增题材类解析模板。
 
 **当前版本**: v1.9.2
 
@@ -39,11 +39,8 @@ playwright install chromium
 
 ### 运行爬虫
 ```bash
-# 异步模式（默认，推荐）
+# 异步模式（默认）
 python creeper.py inputs/input.md
-
-# 同步模式
-python creeper.py inputs/input.md --sync
 
 # 自定义并发数
 python creeper.py inputs/input.md -c 10
@@ -109,11 +106,10 @@ rm -f creeper.log
 
 ### 核心组件
 
-**1. 双模式执行**
-- `creeper.py`: 统一的 CLI 入口
-- `SyncCrawler`: 同步顺序处理
-- `AsyncCrawler`: 异步并发处理（默认）
-- 两者都继承自 `BaseCrawler` 基类
+**1. 异步执行**
+- `creeper.py`: CLI 入口
+- `AsyncCrawler`: 异步并发处理
+- 继承自 `BaseCrawler` 基类
 
 **2. 数据流水线**
 ```
@@ -126,14 +122,14 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 
 - `parser.py`: 从 Markdown 提取 H1/H2 层级结构和 URL，输出 `URLItem` 对象
 - `dedup.py`: 基于 Redis 的去重
-- `fetcher.py` / `async_fetcher.py`: 网页内容获取，使用 Trafilatura 提取
-  - 静态页面: requests + BeautifulSoup
+- `async_fetcher.py`: 异步网页内容获取，使用 Trafilatura 提取
+  - 静态页面: aiohttp
   - 动态页面: Playwright 处理 JS 渲染（自动降级）
 - `storage.py`: 生成目录结构并保存 Markdown 文件
 - `translator.py`: 可选的英文→中文翻译（DeepSeek API）
 - `cookie_manager.py`: Cookie 管理（Redis 或文件存储），用于需要登录的网站
 - `interactive_login.py`: 浏览器手动登录，自动提取 Cookie
-- `image_downloader.py`: 图片下载器（同步和异步版本）
+- `image_downloader.py`: 异步图片下载器
   - 从 Markdown 提取图片 URL
   - 下载图片到 `images/` 子目录
   - 替换 URL 为相对路径
@@ -146,7 +142,7 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 - 支持 TTL 自动过期
 
 **渐进式增强**
-- Fetcher 先尝试静态请求，失败后降级到 Playwright 动态渲染
+- AsyncWebFetcher 先尝试静态请求，失败后降级到 Playwright 动态渲染
 - 翻译功能仅对英文内容触发（langdetect 检测）
 - Redis 失败不阻塞爬取（优雅降级）
 
@@ -221,7 +217,7 @@ Markdown 输入 → Parser → 去重检查 → Fetcher → Storage → Markdown
 
 ## 常见开发任务
 
-**添加新的爬取策略**: 扩展 `WebFetcher` 或 `AsyncWebFetcher`，在 `fetch()` 方法实现降级逻辑
+**添加新的爬取策略**: 扩展 `AsyncWebFetcher`，在 `fetch()` 方法实现降级逻辑
 
 **添加新的存储格式**: 扩展 `StorageManager`，修改 `save()` 方法
 
@@ -251,7 +247,6 @@ git commit -m "chore: 重构XXX模块"
 
 ## 已知限制
 
-- 翻译功能仅在异步模式下可用
 - 交互式登录需要 Playwright headless 模式
 - Redis 数据持久化需要在项目外手动配置
 - URL 最大长度受 MD5 哈希碰撞概率限制（实际使用中可忽略）
