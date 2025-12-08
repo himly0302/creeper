@@ -496,18 +496,28 @@ class AsyncWebFetcher:
             return False
 
         # 检查是否为Cookie政策页面（通用反爬虫检测）
-        # 如果内容中包含大量Cookie政策相关关键词，判定为反爬虫页面
-        policy_keywords = [
-            "cookie", "cookies", "隐私", "政策", "policy", "privacy", "数据", "存储", "访问", "设备",
-            "个性化", "广告", "内容", "衡量", "受众", "研究", "合作伙伴", "标识符", "地理位置"
+        # 使用更精确的政策关键词组合检测，避免误判正常内容
+        strong_policy_indicators = [
+            "cookie", "cookies", "隐私政策", "privacy policy", "个性化广告", "personalised ads",
+            "广告合作伙伴", "精准地理位置", "precise geolocation", "扫描设备特性", "actively scan device"
         ]
 
-        policy_keyword_count = sum(1 for keyword in policy_keywords if keyword in content_lower)
-        policy_ratio = policy_keyword_count / len(policy_keywords)
+        weak_policy_indicators = [
+            "隐私", "policy", "存储", "访问", "设备", "衡量", "受众", "合作伙伴", "标识符"
+        ]
 
-        # 如果超过40%的政策关键词出现，判定为政策页面
-        if policy_ratio > 0.4:
-            logger.debug(f"内容包含过多政策相关关键词({policy_ratio:.2f})，疑似反爬虫页面")
+        # 强指示词权重高，弱指示词权重低
+        strong_count = sum(1 for indicator in strong_policy_indicators if indicator in content_lower)
+        weak_count = sum(1 for indicator in weak_policy_indicators if indicator in content_lower)
+
+        # 计算加权分数：强指示词*2 + 弱指示词*1
+        total_score = strong_count * 2 + weak_count
+        max_possible_score = len(strong_policy_indicators) * 2 + len(weak_policy_indicators)
+        policy_ratio = total_score / max_possible_score
+
+        # 如果超过30%的加权分数，并且至少包含1个强指示词，判定为政策页面
+        if policy_ratio > 0.3 and strong_count >= 1:
+            logger.debug(f"内容包含政策页面特征(强指示词:{strong_count}, 弱指示词:{weak_count}, 比例:{policy_ratio:.2f})，疑似反爬虫页面")
             return False
 
         # 检查是否包含足够的中文字符或英文内容
