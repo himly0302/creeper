@@ -164,8 +164,8 @@ class StorageManager:
 
             ensure_dir(h2_dir)
 
-            # 生成文件名
-            filename = f"{sanitize_filename(item.h2)}.md"
+            # 构建文件名: 标题.md
+            filename = sanitize_filename(page.title) + ".md"
             file_path = h2_dir / filename
 
             # 异步生成 Markdown 内容

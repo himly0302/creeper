@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
+- **文件覆盖**：修复异步保存模式下的文件覆盖问题
+  - 改用网页标题作为文件名，而不是H2标题
+  - 确保同一H2下的多个URL保存到不同文件
+  - 相关文件：`src/storage.py`
 - **属性错误**：修复 StorageManager 缺少 stats 属性的问题
   - 在 StorageManager.__init__ 中初始化 stats 属性
   - 修复了所有保存操作失败的问题
