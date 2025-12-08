@@ -29,6 +29,13 @@ class StorageManager:
         """
         self.output_dir = Path(output_dir or config.OUTPUT_DIR)
         ensure_dir(self.output_dir)
+
+        # 统计信息
+        self.stats = {
+            'total_files': 0,
+            'total_size': 0
+        }
+
         logger.info(f"文件存储管理器已初始化: {self.output_dir}")
 
     def save(self, item: URLItem, page: WebPage) -> Optional[Path]:

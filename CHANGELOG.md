@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
+- **属性错误**：修复 StorageManager 缺少 stats 属性的问题
+  - 在 StorageManager.__init__ 中初始化 stats 属性
+  - 修复了所有保存操作失败的问题
+  - 相关文件：`src/storage.py`
 - **导入错误**：修复删除同步版本后的 WebPage 类导入问题
   - 将 WebPage 类定义移到 async_fetcher.py
   - 更新所有模块的导入路径
