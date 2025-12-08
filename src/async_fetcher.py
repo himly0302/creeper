@@ -413,10 +413,15 @@ class AsyncWebFetcher:
             "禁止访问",
             "请验证您是机器人",
             "请点击下方方框",
+            "请点击下方方框继续操作",
             "证明您不是机器人",
             "请确保您的浏览器支持",
             "请确保您的浏览器支持javascript",
             "cookie 功能",
+            "通过订阅",
+            "立即订阅",
+            "联系我们的支持团队",
+            "参考编号",
             # 英文错误指示词
             "page not found",
             "content not found",
@@ -430,7 +435,12 @@ class AsyncWebFetcher:
             "verify you are human",
             "prove you are not a robot",
             "please enable javascript",
-            "enable cookies"
+            "enable cookies",
+            "click the box below",
+            "prove you are not a robot",
+            "subscribe now",
+            "contact our support team",
+            "reference number"
         ]
 
         # 如果包含错误指示词，认为内容无效

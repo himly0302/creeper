@@ -33,6 +33,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - 实现HEAD请求失败时fallback到GET请求的机制
   - 增强Content-Type验证逻辑，支持多层验证
   - 相关文件：`src/image_downloader.py`
+- **内容质量检查增强**：增强反爬虫页面识别机制，处理Bloomberg等网站的验证页面
+  - 扩展错误指示词列表，新增9个中英文反爬虫关键词
+  - 支持订阅页面、技术错误页面的识别
+  - 提高内容质量检查的覆盖面和准确性
+  - 相关文件：`src/async_fetcher.py`
 - **历史数据清理**：清理遗留的反爬虫验证页面文件
   - 删除 `outputs/中国/中美关税/bloomberg.md` 错误文件
   - 文件包含反爬虫验证内容而非实际新闻内容
