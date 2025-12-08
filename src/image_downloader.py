@@ -16,6 +16,8 @@ from dataclasses import dataclass
 
 import requests
 import aiohttp
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 from src.config import config
 from src.utils import setup_logger
@@ -69,6 +71,12 @@ class AsyncImageDownloader:
 
         # 下载缓存
         self._download_cache: Dict[str, ImageInfo] = {}
+
+        # 线程池用于requests备用下载
+        self._thread_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="image_download")
+
+        # 配置的域名列表（强制使用requests）
+        self._force_requests_domains = self._load_domain_list()
 
     def extract_image_urls(self, markdown_content: str) -> List[Tuple[str, str, str]]:
         """
@@ -129,102 +137,68 @@ class AsyncImageDownloader:
                    parsed.hostname.startswith('172.'):
                     raise ValueError(f"不允许下载内网资源: {url}")
 
-                # 检查是否是已知有问题的域名
+                # 获取域名
                 domain = parsed.hostname.lower() if parsed.hostname else ""
-                is_bbc_domain = domain.endswith('.bbci.co.uk') or domain.endswith('.bbc.com')
 
-                # BBC图片服务器在当前环境下无法通过aiohttp访问，但curl可以
-                # 这是一个已知的环境兼容性问题
-                if is_bbc_domain:
-                    error_msg = f"BBC图片服务器 ({domain}) 在当前网络环境下无法访问，这是一个已知的兼容性问题"
-                    logger.warning(f"⚠ {error_msg}: {url}")
-                    return ImageInfo(url, "", "", False, error_msg)
+                # 检查是否应该使用requests
+                if self._should_use_requests(domain):
+                    logger.debug(f"域名 {domain} 配置使用requests下载: {url}")
+                    result = await self._download_with_requests_async(url, save_dir)
+                    return result
+
+                # 否则使用aiohttp
 
                 # 添加 User-Agent 和其他头部避免被阻止
                 headers = {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
                 }
 
-                # 对BBC域名使用特殊连接设置以避免连接问题
-                connector_kwargs = {}
-                if is_bbc_domain:
-                    connector_kwargs['force_close'] = True
-                    # 可以考虑设置版本，但某些版本的aiohttp可能不支持
-                    # connector = aiohttp.TCPConnector(force_close=True, version=aiohttp.HttpVersion11)
-
-                connector = aiohttp.TCPConnector(**connector_kwargs)
+                # 使用aiohttp下载
+                connector = aiohttp.TCPConnector()
                 async with aiohttp.ClientSession(timeout=self.timeout, headers=headers, connector=connector) as session:
-                    content_type = ""
-                    content_length = None
+                    # 尝试 HEAD 请求检查文件信息
+                    try:
+                        async with session.head(url, allow_redirects=True) as head_response:
+                            content_type = head_response.headers.get('Content-Type', '').lower()
+                            content_length = head_response.headers.get('Content-Length')
 
-                    # 对BBC域名跳过HEAD请求
-                    skip_head = is_bbc_domain
+                            # 如果 HEAD 请求返回非图片类型或403，尝试 GET 请求验证
+                            if (not content_type.startswith('image/') or
+                                head_response.status == 403 or
+                                head_response.status == 404):
 
-                    if skip_head:
-                        logger.debug(f"BBC域名，跳过HEAD请求，直接使用GET请求: {url}")
-                    else:
-                        # 尝试 HEAD 请求检查文件信息
-                        try:
-                            async with session.head(url, allow_redirects=True) as head_response:
-                                content_type = head_response.headers.get('Content-Type', '').lower()
-                                content_length = head_response.headers.get('Content-Length')
+                                logger.debug(f"HEAD 请求失败或返回非图片类型，尝试 GET 请求验证: {url}")
+                                raise Exception("HEAD请求验证失败")
+                            else:
+                                # HEAD请求成功，检查文件大小
+                                if content_length and int(content_length) > self.max_size_bytes:
+                                    size_mb = int(content_length) / 1024 / 1024
+                                    logger.warning(f"⚠ 图片超过大小限制 ({size_mb:.1f}MB > {self.max_size_mb}MB): {url}")
+                                    return ImageInfo(url, "", "", False, f"文件过大: {size_mb:.1f}MB")
 
-                                # 如果 HEAD 请求返回非图片类型或403，尝试 GET 请求验证
-                                if (not content_type.startswith('image/') or
-                                    head_response.status == 403 or
-                                    head_response.status == 404):
+                    except Exception as head_error:
+                        logger.debug(f"HEAD 请求失败，直接使用 GET 请求: {head_error}")
 
-                                    logger.debug(f"HEAD 请求失败或返回非图片类型，尝试 GET 请求验证: {url}")
-                                    skip_head = True
-                                else:
-                                    # HEAD请求成功，检查文件大小
-                                    if content_length and int(content_length) > self.max_size_bytes:
-                                        size_mb = int(content_length) / 1024 / 1024
-                                        logger.warning(f"⚠ 图片超过大小限制 ({size_mb:.1f}MB > {self.max_size_mb}MB): {url}")
-                                        return ImageInfo(url, "", "", False, f"文件过大: {size_mb:.1f}MB")
-
-                        except Exception as head_error:
-                            logger.debug(f"HEAD 请求失败，直接使用 GET 请求: {head_error}")
-                            skip_head = True
-
-                    if skip_head:
-                        # 直接使用 GET 请求验证和下载
-                        logger.debug(f"使用 GET 请求获取图片信息: {url}")
-                        async with session.get(url, allow_redirects=True) as get_response:
-                            get_response.raise_for_status()
-                            content_type = get_response.headers.get('Content-Type', '').lower()
-                            content_length = get_response.headers.get('Content-Length')
-
-                            # 如果仍然是非图片类型，放弃下载
-                            if content_type and not content_type.startswith('image/'):
-                                logger.warning(f"⚠ URL 不是图片类型 ({content_type}): {url}")
-                                return ImageInfo(url, "", "", False, f"非图片类型: {content_type}")
-
-                            # 检查文件大小
-                            if content_length and int(content_length) > self.max_size_bytes:
-                                size_mb = int(content_length) / 1024 / 1024
-                                logger.warning(f"⚠ 图片超过大小限制 ({size_mb:.1f}MB > {self.max_size_mb}MB): {url}")
-                                return ImageInfo(url, "", "", False, f"文件过大: {size_mb:.1f}MB")
-
-                    # 检查文件大小（如果有 HEAD 信息的话）
-                    if content_length and int(content_length) > self.max_size_bytes:
-                        size_mb = int(content_length) / 1024 / 1024
-                        logger.warning(f"⚠ 图片超过大小限制 ({size_mb:.1f}MB > {self.max_size_mb}MB): {url}")
-                        return ImageInfo(url, "", "", False, f"文件过大: {size_mb:.1f}MB")
-
-                    # 下载图片
-                    logger.debug(f"开始下载图片: {url}")
-                    async with session.get(url) as response:
+                    # 使用 GET 请求下载图片
+                    logger.debug(f"使用 GET 请求下载图片: {url}")
+                    async with session.get(url, allow_redirects=True) as response:
                         response.raise_for_status()
 
-                        # 最终验证响应的 Content-Type
-                        actual_content_type = response.headers.get('Content-Type', '').lower()
-                        if actual_content_type and not actual_content_type.startswith('image/'):
-                            logger.warning(f"⚠ 下载时发现 URL 不是图片类型 ({actual_content_type}): {url}")
-                            return ImageInfo(url, "", "", False, f"非图片类型: {actual_content_type}")
+                        # 验证响应的 Content-Type
+                        content_type = response.headers.get('Content-Type', '').lower()
+                        if content_type and not content_type.startswith('image/'):
+                            logger.warning(f"⚠ URL 不是图片类型 ({content_type}): {url}")
+                            return ImageInfo(url, "", "", False, f"非图片类型: {content_type}")
+
+                        # 检查文件大小
+                        content_length = response.headers.get('Content-Length')
+                        if content_length and int(content_length) > self.max_size_bytes:
+                            size_mb = int(content_length) / 1024 / 1024
+                            logger.warning(f"⚠ 图片超过大小限制 ({size_mb:.1f}MB > {self.max_size_mb}MB): {url}")
+                            return ImageInfo(url, "", "", False, f"文件过大: {size_mb:.1f}MB")
 
                         # 生成文件名
-                        filename = self._generate_filename(url, content_type or actual_content_type)
+                        filename = self._generate_filename(url, content_type)
 
                         # 确保保存目录存在
                         save_dir.mkdir(parents=True, exist_ok=True)
@@ -260,9 +234,20 @@ class AsyncImageDownloader:
                         return result
 
             except Exception as e:
-                error_msg = f"{type(e).__name__}: {e}"
-                logger.warning(f"⚠ 图片下载失败，保留原始URL: {url} - {error_msg}")
-                return ImageInfo(url, "", "", False, error_msg)
+                aiohttp_error_msg = f"aiohttp下载失败: {type(e).__name__}: {e}"
+                logger.warning(f"⚠ {aiohttp_error_msg}: {url}")
+
+                # 对于配置的域名，尝试requests备用
+                logger.debug(f"尝试requests备用下载: {url}")
+                try:
+                    result = await self._download_with_requests_async(url, save_dir)
+                    return result
+
+                except Exception as requests_e:
+                    logger.warning(f"⚠ requests备用下载也失败: {url} - {type(requests_e).__name__}: {requests_e}")
+                    # 返回组合错误信息
+                    combined_error = f"{aiohttp_error_msg}; requests备用也失败: {type(requests_e).__name__}: {requests_e}"
+                    return ImageInfo(url, "", "", False, combined_error)
 
     def _generate_filename(self, url: str, content_type: str) -> str:
         """生成安全的文件名（与同步版本相同）"""
@@ -302,6 +287,160 @@ class AsyncImageDownloader:
         }
 
         return mapping.get(content_type, '.jpg')
+
+    async def _download_with_requests_async(self, url: str, save_dir: Path) -> ImageInfo:
+        """
+        异步包装requests下载方法
+
+        Args:
+            url: 图片 URL
+            save_dir: 保存目录
+
+        Returns:
+            ImageInfo 对象
+        """
+        loop = asyncio.get_event_loop()
+        try:
+            result = await loop.run_in_executor(
+                self._thread_pool,
+                self._download_with_requests,
+                url,
+                save_dir
+            )
+
+            # 缓存结果
+            if result.success:
+                self._download_cache[url] = result
+
+            return result
+
+        except Exception as e:
+            error_msg = f"requests异步下载失败: {type(e).__name__}: {e}"
+            logger.warning(f"⚠ {error_msg}: {url}")
+            return ImageInfo(url, "", "", False, error_msg)
+
+    def _load_domain_list(self) -> List[str]:
+        """
+        加载需要强制使用requests的域名列表
+
+        Returns:
+            List[str]: 域名列表
+        """
+        domains = []
+
+        # 从环境变量加载
+        env_domains = os.getenv('FORCE_REQUESTS_DOMAINS', '').split(',')
+        domains.extend([d.strip() for d in env_domains if d.strip()])
+
+        # 默认包含的问题域名
+        default_domains = ['bbci.co.uk', 'bbc.com']
+        for domain in default_domains:
+            if domain not in domains:
+                domains.append(domain)
+                logger.debug(f"默认添加问题域名: {domain}")
+
+        logger.info(f"配置使用requests的域名: {domains}")
+        return domains
+
+    def _should_use_requests(self, domain: str) -> bool:
+        """
+        检查域名是否应该使用requests
+
+        Args:
+            domain: 域名
+
+        Returns:
+            bool: 是否使用requests
+        """
+        domain = domain.lower()
+
+        # 检查是否在强制列表中
+        for configured_domain in self._force_requests_domains:
+            if domain == configured_domain or domain.endswith('.' + configured_domain):
+                logger.debug(f"域名 {domain} 匹配配置，使用requests: {configured_domain}")
+                return True
+
+        return False
+
+    def _download_with_requests(self, url: str, save_dir: Path) -> ImageInfo:
+        """
+        使用requests库下载图片（用于BBC等aiohttp有问题的域名）
+
+        Args:
+            url: 图片 URL
+            save_dir: 保存目录
+
+        Returns:
+            ImageInfo 对象
+        """
+        try:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+
+            # 使用requests下载
+            response = requests.get(url, headers=headers, timeout=15, stream=True)
+            response.raise_for_status()
+
+            # 检查Content-Type
+            content_type = response.headers.get('Content-Type', '').lower()
+            if not content_type.startswith('image/'):
+                error_msg = f"requests下载检测到非图片类型: {content_type}"
+                logger.warning(f"⚠ {error_msg}: {url}")
+                return ImageInfo(url, "", "", False, error_msg)
+
+            # 检查文件大小
+            content_length = response.headers.get('Content-Length')
+            if content_length and int(content_length) > self.max_size_bytes:
+                size_mb = int(content_length) / 1024 / 1024
+                error_msg = f"图片超过大小限制 ({size_mb:.1f}MB > {self.max_size_mb}MB)"
+                logger.warning(f"⚠ {error_msg}: {url}")
+                return ImageInfo(url, "", "", False, error_msg)
+
+            # 下载内容
+            content = response.content
+            if len(content) > self.max_size_bytes:
+                size_mb = len(content) / 1024 / 1024
+                error_msg = f"图片超过大小限制 ({size_mb:.1f}MB > {self.max_size_mb}MB)"
+                logger.warning(f"⚠ {error_msg}: {url}")
+                return ImageInfo(url, "", "", False, error_msg)
+
+            # 生成文件名
+            filename = self._generate_filename(url, content_type)
+
+            # 确保保存目录存在
+            save_dir.mkdir(parents=True, exist_ok=True)
+
+            # 保存文件
+            file_path = save_dir / filename
+
+            # 处理文件名冲突
+            counter = 1
+            original_filename = filename
+            while file_path.exists():
+                name, ext = os.path.splitext(original_filename)
+                filename = f"{name}-{counter}{ext}"
+                file_path = save_dir / filename
+                counter += 1
+
+            # 写入文件
+            with open(file_path, 'wb') as f:
+                f.write(content)
+
+            logger.info(f"✓ 图片已下载 (requests): {filename}")
+
+            # 相对路径
+            local_path = f"images/{filename}"
+
+            # 创建结果对象
+            result = ImageInfo(url, local_path, filename, True)
+
+            return result
+
+        except Exception as e:
+            error_msg = f"requests下载失败: {type(e).__name__}: {e}"
+            logger.warning(f"⚠ {error_msg}: {url}")
+            return ImageInfo(url, "", "", False, error_msg)
 
     def extract_markdown_images(self, content: str) -> List[str]:
         """

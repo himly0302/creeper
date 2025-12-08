@@ -422,6 +422,22 @@ class AsyncWebFetcher:
             "立即订阅",
             "联系我们的支持团队",
             "参考编号",
+            # Cookie政策和隐私政策指示词（通用反爬虫识别）
+            "使用精确的地理位置数据",
+            "主动扫描设备特性以进行识别",
+            "在设备上存储和/或访问信息",
+            "个性化广告和内容",
+            "广告和内容衡量",
+            "受众研究和服务开发",
+            "网站运行离不开这些 cookie",
+            "您可以将您的浏览器设置为阻止",
+            "这些 cookie 收集的所有信息都聚合在一起",
+            "匿名处理方式",
+            "广告合作伙伴通过我们的网站进行设置",
+            "构建您的兴趣分布图",
+            "在线标识符",
+            "增强功能和个性化内容",
+            "实时聊天",
             # 英文错误指示词
             "page not found",
             "content not found",
@@ -440,7 +456,19 @@ class AsyncWebFetcher:
             "prove you are not a robot",
             "subscribe now",
             "contact our support team",
-            "reference number"
+            "reference number",
+            # 英文Cookie政策指示词
+            "precise geolocation data",
+            "actively scan device characteristics",
+            "store and/or access information on a device",
+            "personalised ads and content",
+            "ad and content measurement",
+            "audience insights and product development",
+            "essential for the site to function",
+            "cannot be switched off in our systems",
+            "usually only set in response to actions made by you",
+            "such as setting your privacy preferences",
+            "we cannot know when you have visited our site"
         ]
 
         # 如果包含错误指示词，认为内容无效
@@ -465,6 +493,21 @@ class AsyncWebFetcher:
 
         if content_length < min_length:
             logger.debug(f"内容过短: {content_length} 字符 < {min_length} 字符")
+            return False
+
+        # 检查是否为Cookie政策页面（通用反爬虫检测）
+        # 如果内容中包含大量Cookie政策相关关键词，判定为反爬虫页面
+        policy_keywords = [
+            "cookie", "cookies", "隐私", "政策", "policy", "privacy", "数据", "存储", "访问", "设备",
+            "个性化", "广告", "内容", "衡量", "受众", "研究", "合作伙伴", "标识符", "地理位置"
+        ]
+
+        policy_keyword_count = sum(1 for keyword in policy_keywords if keyword in content_lower)
+        policy_ratio = policy_keyword_count / len(policy_keywords)
+
+        # 如果超过40%的政策关键词出现，判定为政策页面
+        if policy_ratio > 0.4:
+            logger.debug(f"内容包含过多政策相关关键词({policy_ratio:.2f})，疑似反爬虫页面")
             return False
 
         # 检查是否包含足够的中文字符或英文内容
