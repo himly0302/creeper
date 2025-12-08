@@ -32,7 +32,7 @@ class Config:
     # 浏览器配置
     BROWSER_TYPE = os.getenv('BROWSER_TYPE', 'chromium')
     BROWSER_HEADLESS = os.getenv('BROWSER_HEADLESS', 'true').lower() == 'true'
-    PAGE_TIMEOUT = int(os.getenv('PAGE_TIMEOUT', 60000))
+    PAGE_TIMEOUT = int(os.getenv('PAGE_TIMEOUT', 30000))
 
     # User-Agent 池
     USER_AGENTS = os.getenv(

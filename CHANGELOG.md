@@ -16,6 +16,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **默认重试次数调整**：将 `MAX_RETRIES` 默认值从 3 改为 1
   - 减少对无法访问网站的无效重试等待时间
   - 相关文件：`src/config.py`, `.env.example`
+- **页面加载超时调整**：将 `PAGE_TIMEOUT` 默认值从 60000ms 改为 30000ms
+  - 减少动态渲染超时对并发任务的阻塞时间
+  - 相关文件：`src/config.py`, `.env.example`
 
 ### Removed
 - **功能**：同步爬虫模式
