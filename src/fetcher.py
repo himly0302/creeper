@@ -104,7 +104,7 @@ class WebFetcher:
             page = self._fetch_static(url)
             if page.success and len(page.content) >= config.MIN_TEXT_LENGTH:
                 # 检查内容质量，过滤错误页面（同时检查标题和内容）
-                if self._is_valid_content(page.content, page.title):
+                if self._is_valid_content(page.content, page.title, url):
                     logger.info(f"✓ 静态爬取成功: {url}")
                     return page
                 else:
@@ -123,7 +123,7 @@ class WebFetcher:
                 page = self._fetch_dynamic(url)
                 if page.success and len(page.content) >= config.MIN_TEXT_LENGTH:
                     # 额外检查内容质量（同时检查标题和内容）
-                    if self._is_valid_content(page.content, page.title):
+                    if self._is_valid_content(page.content, page.title, url):
                         logger.info(f"✓ 动态渲染成功: {url}")
                         return page
                     else:
@@ -313,19 +313,24 @@ class WebFetcher:
         except Exception:
             return ""
 
-    def _is_valid_content(self, content: str, title: str = "") -> bool:
+    def _is_valid_content(self, content: str, title: str = "", url: str = "") -> bool:
         """
         检查内容是否有效，过滤掉错误页面和低质量内容
 
         Args:
             content: 网页内容
             title: 网页标题（可选）
+            url: 网页URL（可选，用于特殊网站处理）
 
         Returns:
             True 表示内容有效，False 表示内容无效
         """
         content_lower = content.lower()
         title_lower = title.lower() if title else ""
+        url_lower = url.lower() if url else ""
+
+        # 对于维基百科等知名内容网站，使用更宽松的检查
+        is_wikipedia = 'wikipedia.org' in url_lower
 
         # 检查常见的错误页面指示词（中英文）
         error_indicators = [
@@ -361,26 +366,44 @@ class WebFetcher:
         ]
 
         # 如果包含错误指示词，认为内容无效
-        # 同时检查标题和内容
+        # 对于维基百科等网站，放宽错误指示词检查
         for indicator in error_indicators:
             if indicator in content_lower:
+                # 维基百科页面可能包含"404"等词但不是错误页面
+                if is_wikipedia and indicator in ["404"]:
+                    continue
                 logger.debug(f"内容包含错误指示词: {indicator}")
                 return False
             if indicator in title_lower:
+                # 维基百科标题可能包含"404"等词但不是错误页面
+                if is_wikipedia and indicator in ["404"]:
+                    continue
                 logger.debug(f"标题包含错误指示词: {indicator}")
                 return False
 
-        # 检查内容是否太短或主要是重复文字
-        if len(content.strip()) < 200:
+        # 检查内容是否太短
+        content_length = len(content.strip())
+        min_length = 100 if is_wikipedia else 200  # 维基百科使用更低的长度要求
+
+        if content_length < min_length:
+            logger.debug(f"内容过短: {content_length} 字符 < {min_length} 字符")
             return False
 
         # 检查是否包含足够的中文字符或英文内容
         chinese_chars = len([c for c in content if '\u4e00' <= c <= '\u9fff'])
         english_chars = len([c for c in content if 'a' <= c <= 'z' or 'A' <= c <= 'Z'])
 
-        # 如果中文字符少于50个且英文字符少于100个，可能内容质量不高
-        if chinese_chars < 50 and english_chars < 100:
-            return False
+        # 对于维基百科，使用更宽松的字符数要求
+        if is_wikipedia:
+            # 维基百科内容通常是高质量的，即使字符数较少也可能是有效页面
+            if chinese_chars < 20 and english_chars < 50:
+                logger.debug(f"维基百科字符数不足: 中文 {chinese_chars} 字符 < 20, 英文 {english_chars} 字符 < 50")
+                return False
+        else:
+            # 其他网站使用原来的标准
+            if chinese_chars < 50 and english_chars < 100:
+                logger.debug(f"字符数不足: 中文 {chinese_chars} 字符 < 50, 英文 {english_chars} 字符 < 100")
+                return False
 
         return True
 

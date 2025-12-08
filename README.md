@@ -260,36 +260,6 @@ python creeper.py --urls "URL1,URL2" --with-images
   --with-images          提取页面中的图片链接(需配合 --urls)
 ```
 
-#### URL列表模式输出格式
-
-**标准输出**：
-```json
-[
-  {
-    "title": "页面标题",
-    "summary": "页面描述",
-    "content": "页面正文内容",
-    "url": "https://example.com"
-  }
-]
-```
-
-**含图片链接输出**（使用 `--with-images`）：
-```json
-[
-  {
-    "title": "页面标题",
-    "summary": "页面描述",
-    "content": "页面正文内容",
-    "url": "https://example.com",
-    "images": [
-      "https://example.com/images/logo.png",
-      "https://example.com/images/banner.jpg"
-    ]
-  }
-]
-```
-
 
 ## 🐛 故障排查
 

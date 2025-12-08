@@ -8,11 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 - **CLI**：新增 `--with-images` 参数，在 `--urls` 模式下提取页面图片链接
-  - 必须配合 `--urls` 使用，单独使用会提示错误
-  - 输出 JSON 中新增 `images` 字段，包含页面中所有图片 URL
-  - 支持相对路径图片 URL 自动转换为绝对路径
-  - 自动过滤无效图片 URL（如 data URI、空链接等）
+  - 必须配合 `--urls` 使用，输出 JSON 中新增 `images` 字段
   - 相关文件：`src/cli_parser.py`, `src/url_list_mode.py`, `creeper.py`
+
+### Fixed
+- **内容验证**：修复维基百科等网站爬取失败问题
+  - 优化403状态码处理，对维基百科等网站更宽松
+  - 调整内容质量检查逻辑，对知名内容网站使用更宽松标准
+  - 相关文件：`src/fetcher.py`, `src/async_fetcher.py`
 - **CLI**：新增 --urls 参数支持直接输入URL列表
   - 接受逗号分隔的URL，输出JSON格式结构化数据到控制台
   - 每次强制重新查询（类似 --force 行为）
