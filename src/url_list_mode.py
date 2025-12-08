@@ -111,9 +111,9 @@ class URLListMode:
 
         # 如果启用图片提取，添加 images 字段
         if self.with_images and webpage.success:
-            # 复用 ImageDownloader 的图片提取逻辑
-            from .image_downloader import ImageDownloader
-            downloader = ImageDownloader(base_url=webpage.url)
+            # 使用 AsyncImageDownloader 的图片提取逻辑
+            from .image_downloader import AsyncImageDownloader
+            downloader = AsyncImageDownloader(base_url=webpage.url)
             image_urls = downloader.extract_image_urls(webpage.content)
             # 提取完整URL列表（去掉alt_text和原始URL）
             result["images"] = [img_url for _, _, img_url in image_urls]

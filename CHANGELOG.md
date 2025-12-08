@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
+- **图片下载器导入**：修复URL列表模式中的图片下载器导入错误
+  - 将 ImageDownloader 替换为 AsyncImageDownloader
+  - 恢复 --with-images 参数在URL列表模式下的功能
+  - 相关文件：`src/url_list_mode.py`
 - **文件覆盖**：修复异步保存模式下的文件覆盖问题
   - 改用网页标题作为文件名，而不是H2标题
   - 确保同一H2下的多个URL保存到不同文件
