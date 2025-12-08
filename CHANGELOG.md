@@ -30,10 +30,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - 替代方案：所有操作默认使用异步并发模式
 
 ### Fixed
+- **max_tokens 类型错误修复**：修复翻译模块因 max_tokens 参数类型错误导致的 API 调用失败
+  - 缓存中的 token 值被存储为字符串，读取时转换为整数类型
+  - 确保 API 调用时 max_tokens 始终是整数类型
+  - 相关文件：`src/model_capabilities.py`
 - **事件循环冲突修复**：修复异步环境中模型能力探测因事件循环冲突而失败的问题
-  - 新增 `async_get_or_detect()` 异步方法，用于在已有事件循环中调用
-  - 同步方法增加事件循环检测保护，避免嵌套调用导致崩溃
-  - 相关文件：`src/model_capabilities.py`, `src/translator.py`
 - **模型能力探测调用修复**：修复 Translator 模块调用 ModelCapabilityManager.get_or_detect() 参数不匹配的问题
   - 修正错误的 `client` 和 `fallback_max_tokens` 参数为正确的 `api_key` 和 `timeout`
   - 移除错误的 `await` 关键字（该方法是同步的）

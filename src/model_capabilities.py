@@ -82,8 +82,8 @@ class ModelCapabilityManager:
                 return {
                     "model": capability_data.get("model"),
                     "base_url": capability_data.get("base_url"),
-                    "max_input_tokens": capability_data.get("max_input_tokens"),
-                    "max_output_tokens": capability_data.get("max_output_tokens"),
+                    "max_input_tokens": int(capability_data.get("max_input_tokens", 0)),
+                    "max_output_tokens": int(capability_data.get("max_output_tokens", 0)),
                     "detected_at": capability_data.get("detected_at")
                 }
 
