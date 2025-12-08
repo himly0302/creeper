@@ -59,11 +59,12 @@ class Translator:
         if config.ENABLE_MODEL_AUTO_DETECTION:
             try:
                 capability_mgr = ModelCapabilityManager()
-                capability = await capability_mgr.get_or_detect(
+                # 使用 API 密钥进行探测
+                capability = capability_mgr.get_or_detect(
                     model=self.model,
                     base_url=self.base_url,
-                    client=self.client,
-                    fallback_max_tokens=8000  # 翻译模块的默认值
+                    api_key=self.client.api_key,
+                    timeout=config.MODEL_DETECTION_TIMEOUT
                 )
                 self._max_tokens = capability['max_output_tokens']
                 logger.info(f"使用探测到的 max_tokens: {self._max_tokens}")

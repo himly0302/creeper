@@ -24,6 +24,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - 替代方案：所有操作默认使用异步并发模式
 
 ### Fixed
+- **模型能力探测调用修复**：修复 Translator 模块调用 ModelCapabilityManager.get_or_detect() 参数不匹配的问题
+  - 修正错误的 `client` 和 `fallback_max_tokens` 参数为正确的 `api_key` 和 `timeout`
+  - 移除错误的 `await` 关键字（该方法是同步的）
+  - 相关文件：`src/translator.py`
 - **重试机制并发优化**：修复重试等待期间阻塞并发槽的问题
   - 将重试逻辑移至信号量（semaphore）外部执行
   - 重试等待期间释放并发槽，允许其他任务继续执行
