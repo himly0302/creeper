@@ -7,12 +7,12 @@ import asyncio
 from pathlib import Path
 from typing import Optional
 
-from .fetcher import WebPage
+from .async_fetcher import WebPage
 from .parser import URLItem
 from .cleaner import ContentCleaner
 from .config import config
 from .utils import setup_logger, sanitize_filename, ensure_dir, get_timestamp
-from .image_downloader import ImageDownloader, AsyncImageDownloader
+from .image_downloader import AsyncImageDownloader
 
 logger = setup_logger(__name__)
 
@@ -66,79 +66,7 @@ class StorageManager:
             logger.error(f"保存文件失败: {e}")
             return None
 
-    def _generate_markdown(self, item: URLItem, page: WebPage, h2_dir: Path) -> str:
-        """
-        生成 Markdown 文件内容
-
-        Args:
-            item: URL 项目
-            page: 网页数据
-            h2_dir: H2 级目录路径（用于保存图片）
-
-        Returns:
-            Markdown 格式的文件内容
-        """
-        # 清洗内容
-        content = ContentCleaner.clean(page.content)
-        description = ContentCleaner.truncate_description(page.description, 300)
-
-        # 智能图片下载处理（如果启用）
-        if config.DOWNLOAD_IMAGES:
-            try:
-                logger.debug("图片下载功能已启用，开始智能处理图片...")
-                downloader = ImageDownloader(base_url=page.url)
-                images_dir = h2_dir / "images"
-
-                # 从清洗后的内容中提取图片 URL
-                markdown_images = downloader.extract_markdown_images(content)
-
-                if markdown_images:
-                    logger.info(f"从清洗后的内容中发现 {len(markdown_images)} 张图片，开始下载...")
-                    # 只下载在清洗后内容中存在的图片
-                    content = downloader.download_valid_images(content, markdown_images, images_dir)
-                else:
-                    logger.debug("清洗后的内容中没有发现图片，跳过图片下载")
-
-                downloader.close()
-            except Exception as e:
-                logger.warning(f"⚠ 智能图片下载处理失败，将使用原始内容: {e}")
-
-        # 构建 Markdown
-        lines = []
-
-        # 标题
-        lines.append(f"# {page.title}")
-        lines.append("")
-
-        # 元信息
-        lines.append(f"> 📅 **爬取时间**: {page.crawled_at}")
-        lines.append(f"> 🔗 **来源链接**: {page.url}")
-
-        if description:
-            lines.append(f"> 📝 **网页描述**: {description}")
-
-        if page.author:
-            lines.append(f"> ✍️ **作者**: {page.author}")
-
-        if page.published_date:
-            lines.append(f"> 📆 **发布时间**: {page.published_date}")
-
-        lines.append(f"> 🎯 **爬取方式**: {'动态渲染' if page.method == 'dynamic' else '静态爬取'}")
-        lines.append("")
-        lines.append("---")
-        lines.append("")
-
-        # 主体内容
-        lines.append(content)
-        lines.append("")
-        lines.append("---")
-        lines.append("")
-
-        # 页脚
-        lines.append("*本文由 Creeper 自动爬取并清洗*")
-
-        return '\n'.join(lines)
-
+    
     async def _generate_markdown_async(self, item: URLItem, page: WebPage, h2_dir: Path) -> str:
         """
         异步生成 Markdown 文件内容

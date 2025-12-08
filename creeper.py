@@ -147,8 +147,8 @@ class AsyncCrawler(BaseCrawler):
                 self.failed_items.append((item, page.error or "未知错误"))
                 return
 
-            # 保存文件(同步操作,但很快)
-            file_path = self.storage.save(item, page)
+            # 保存文件(异步操作)
+            file_path = await self.storage.save_async(item, page)
 
             if file_path:
                 # 标记为已爬取

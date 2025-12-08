@@ -9,8 +9,7 @@ import sys
 from typing import List, Dict, Any
 from urllib.parse import urlparse
 
-from .async_fetcher import AsyncWebFetcher
-from .fetcher import WebPage
+from .async_fetcher import AsyncWebFetcher, WebPage
 from .utils import setup_logger
 from .config import config
 

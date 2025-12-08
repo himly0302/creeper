@@ -16,10 +16,30 @@ from playwright.async_api import async_playwright, TimeoutError as PlaywrightTim
 
 from .config import config
 from .utils import setup_logger, extract_domain, get_timestamp, current_url
-from .fetcher import WebPage  # 复用 WebPage 数据类
 from .cookie_manager import CookieManager
 
 logger = setup_logger(__name__)
+
+
+@dataclass
+class WebPage:
+    """网页数据类"""
+    url: str
+    title: str
+    description: str
+    content: str
+    author: str = ""
+    published_date: str = ""
+    crawled_at: str = ""
+    method: str = "static"  # static 或 dynamic
+    success: bool = True
+    error: Optional[str] = None
+    translated: bool = False  # 是否已翻译
+    original_language: str = "unknown"  # 原始语言
+
+    def __post_init__(self):
+        if not self.crawled_at:
+            self.crawled_at = get_timestamp()
 
 
 class AsyncWebFetcher:

@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **导入错误**：修复删除同步版本后的 WebPage 类导入问题
+  - 将 WebPage 类定义移到 async_fetcher.py
+  - 更新所有模块的导入路径
+  - 统一使用异步保存方法
+  - 相关文件：`src/async_fetcher.py`, `src/url_list_mode.py`, `src/storage.py`, `creeper.py`
+
 ### Changed
 - **架构**：移除同步爬虫模式，统一使用异步模式
   - 删除 `SyncCrawler` 类和 `--sync` 选项
