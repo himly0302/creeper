@@ -59,8 +59,8 @@ class Translator:
         if config.ENABLE_MODEL_AUTO_DETECTION:
             try:
                 capability_mgr = ModelCapabilityManager()
-                # 使用 API 密钥进行探测
-                capability = capability_mgr.get_or_detect(
+                # 使用异步方法进行探测（避免事件循环冲突）
+                capability = await capability_mgr.async_get_or_detect(
                     model=self.model,
                     base_url=self.base_url,
                     api_key=self.client.api_key,

@@ -247,9 +247,34 @@ class ModelCapabilityManager:
         logger.warning(f"使用默认模型能力: {model} (输入: {capability_info['max_input_tokens']}, 输出: {capability_info['max_output_tokens']})")
         return capability_info
 
+    async def async_get_or_detect(self, model: str, base_url: str, api_key: str, timeout: int = 10) -> Dict:
+        """
+        异步获取模型能力（优先从缓存获取，如果不存在则探测）
+
+        用于在已有事件循环中调用（如异步爬虫）
+
+        Args:
+            model: 模型名称
+            base_url: API 基础 URL
+            api_key: API 密钥
+            timeout: 探测超时时间（秒）
+
+        Returns:
+            模型能力信息字典
+        """
+        # 先检查缓存
+        cached = self.get_cached_capability(model, base_url)
+        if cached:
+            return cached
+
+        # 缓存不存在，进行探测
+        return await self.detect_capability(model, base_url, api_key, timeout)
+
     def get_or_detect(self, model: str, base_url: str, api_key: str, timeout: int = 10) -> Dict:
         """
-        获取模型能力（优先从缓存获取，如果不存在则探测）
+        同步获取模型能力（优先从缓存获取，如果不存在则探测）
+
+        注意：此方法不能在已运行的事件循环中调用，请使用 async_get_or_detect()
 
         Args:
             model: 模型名称
@@ -270,6 +295,10 @@ class ModelCapabilityManager:
         try:
             # 获取或创建事件循环
             loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # 如果事件循环已在运行，返回默认值（避免嵌套调用问题）
+                logger.warning("事件循环已运行，无法同步探测，使用默认值")
+                return self._get_default_capability(model, base_url)
         except RuntimeError:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
