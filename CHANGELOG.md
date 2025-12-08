@@ -13,6 +13,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - 删除同步图片下载器，只保留 `AsyncImageDownloader`
   - 简化项目结构，减少代码维护成本
   - 相关文件：`creeper.py`, `src/cli_parser.py`, `src/base_crawler.py`, `src/image_downloader.py`
+- **默认重试次数调整**：将 `MAX_RETRIES` 默认值从 3 改为 1
+  - 减少对无法访问网站的无效重试等待时间
+  - 相关文件：`src/config.py`, `.env.example`
 
 ### Removed
 - **功能**：同步爬虫模式

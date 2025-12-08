@@ -26,7 +26,7 @@ class Config:
     REQUEST_TIMEOUT = int(os.getenv('REQUEST_TIMEOUT', 30))
     MIN_DELAY = float(os.getenv('MIN_DELAY', 1))
     MAX_DELAY = float(os.getenv('MAX_DELAY', 3))
-    MAX_RETRIES = int(os.getenv('MAX_RETRIES', 3))
+    MAX_RETRIES = int(os.getenv('MAX_RETRIES', 1))
     RETRY_BASE_DELAY = float(os.getenv('RETRY_BASE_DELAY', 2))
 
     # 浏览器配置
