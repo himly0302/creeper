@@ -187,11 +187,11 @@ class AsyncWebFetcher:
 
         async with aiohttp.ClientSession(timeout=timeout, cookies=cookies) as session:
             async with session.get(url, headers=headers, allow_redirects=True) as response:
-                # 检查状态码，但对维基百科等网站更宽松
+                # 检查状态码，但对特殊网站使用配置的宽容规则
                 if response.status >= 400:
-                    # 对于维基百科等网站，如果状态码是 403，仍然尝试获取内容
-                    if 'wikipedia.org' in url.lower() and response.status == 403:
-                        logger.warning(f"维基百科返回 403，但仍尝试提取内容: {url}")
+                    permitted_codes = config.get_permitted_status_codes(url)
+                    if response.status in permitted_codes:
+                        logger.warning(f"网站 {url} 返回 {response.status}，但该状态码在宽容列表中，继续处理")
                     else:
                         raise aiohttp.ClientResponseError(
                             request_info=response.request_info,
@@ -376,10 +376,9 @@ class AsyncWebFetcher:
         """
         content_lower = content.lower()
         title_lower = title.lower() if title else ""
-        url_lower = url.lower() if url else ""
 
-        # 对于维基百科等知名内容网站，使用更宽松的检查
-        is_wikipedia = 'wikipedia.org' in url_lower
+        # 获取该URL的内容验证规则
+        validation_rules = config.get_content_validation_rules(url)
 
         # 检查常见的错误页面指示词（中英文）
         error_indicators = [
@@ -415,24 +414,24 @@ class AsyncWebFetcher:
         ]
 
         # 如果包含错误指示词，认为内容无效
-        # 对于维基百科等网站，放宽错误指示词检查
+        # 对于配置的网站，跳过指定的错误指示词
         for indicator in error_indicators:
             if indicator in content_lower:
-                # 维基百科页面可能包含"404"等词但不是错误页面
-                if is_wikipedia and indicator in ["404"]:
+                # 检查是否在跳过列表中
+                if indicator in validation_rules['skip_indicators']:
                     continue
                 logger.debug(f"内容包含错误指示词: '{indicator}'")
                 return False
             if indicator in title_lower:
-                # 维基百科标题可能包含"404"等词但不是错误页面
-                if is_wikipedia and indicator in ["404"]:
+                # 检查是否在跳过列表中
+                if indicator in validation_rules['skip_indicators']:
                     continue
                 logger.debug(f"标题包含错误指示词: '{indicator}'")
                 return False
 
         # 检查内容是否太短
         content_length = len(content.strip())
-        min_length = 100 if is_wikipedia else 200  # 维基百科使用更低的长度要求
+        min_length = validation_rules['min_length']
 
         if content_length < min_length:
             logger.debug(f"内容过短: {content_length} 字符 < {min_length} 字符")
@@ -442,17 +441,13 @@ class AsyncWebFetcher:
         chinese_chars = len([c for c in content if '\u4e00' <= c <= '\u9fff'])
         english_chars = len([c for c in content if 'a' <= c <= 'z' or 'A' <= c <= 'Z'])
 
-        # 对于维基百科，使用更宽松的字符数要求
-        if is_wikipedia:
-            # 维基百科内容通常是高质量的，即使字符数较少也可能是有效页面
-            if chinese_chars < 20 and english_chars < 50:
-                logger.debug(f"维基百科字符数不足: 中文 {chinese_chars} 字符 < 20, 英文 {english_chars} 字符 < 50")
-                return False
-        else:
-            # 其他网站使用原来的标准
-            if chinese_chars < 50 and english_chars < 100:
-                logger.debug(f"字符数不足: 中文 {chinese_chars} 字符 < 50, 英文 {english_chars} 字符 < 100")
-                return False
+        # 使用配置的字符数要求
+        min_chinese = validation_rules['min_chinese']
+        min_english = validation_rules['min_english']
+
+        if chinese_chars < min_chinese and english_chars < min_english:
+            logger.debug(f"字符数不足: 中文 {chinese_chars} 字符 < {min_chinese}, 英文 {english_chars} 字符 < {min_english}")
+            return False
 
         return True
 

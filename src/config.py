@@ -88,10 +88,122 @@ class Config:
     MODEL_DETECTION_TIMEOUT = int(os.getenv('MODEL_DETECTION_TIMEOUT', 10))
     MODEL_CAPABILITY_CACHE_FILE = os.getenv('MODEL_CAPABILITY_CACHE_FILE', 'data/model_capabilities.json')
 
+    # 特殊网站处理配置
+    # 需要宽松处理的网站列表（域名匹配）
+    PERMISSIVE_DOMAINS = os.getenv(
+        'PERMISSIVE_DOMAINS',
+        'wikipedia.org,wikimedia.org,github.com,stackoverflow.com,docs.python.org'
+    ).split(',')
+
+    # 特殊网站的HTTP状态码宽容配置（域名:状态码列表，用分号分隔）
+    PERMISSIVE_STATUS_CODES = os.getenv(
+        'PERMISSIVE_STATUS_CODES',
+        'wikipedia.org:403;wikimedia.org:403;github.com:403,404'
+    )
+
+    # 特殊网站的内容质量配置
+    # 格式：域名:最小长度:中文最小字符:英文最小字符:错误指示词跳过（用分号分隔）
+    PERMISSIVE_CONTENT_RULES = os.getenv(
+        'PERMISSIVE_CONTENT_RULES',
+        'wikipedia.org:100:20:50:404;wikimedia.org:100:20:50:404;github.com:50:10:25:404;stackoverflow.com:100:15:30:'
+    )
+
     # 调试配置
     DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
     LOG_FILE = os.getenv('LOG_FILE', 'creeper.log')
+
+    @classmethod
+    def get_redis_url(cls) -> str:
+        """获取 Redis 连接 URL"""
+        if cls.REDIS_PASSWORD:
+            return f"redis://:{cls.REDIS_PASSWORD}@{cls.REDIS_HOST}:{cls.REDIS_PORT}/{cls.REDIS_DB}"
+
+    @classmethod
+    def is_permissive_domain(cls, url: str) -> bool:
+        """
+        检查URL是否属于需要宽松处理的域名
+
+        Args:
+            url: 网页URL
+
+        Returns:
+            bool: 是否属于宽松处理域名
+        """
+        from urllib.parse import urlparse
+        domain = urlparse(url).netloc.lower()
+        return any(perm_domain in domain for perm_domain in cls.PERMISSIVE_DOMAINS)
+
+    @classmethod
+    def get_permitted_status_codes(cls, url: str) -> List[int]:
+        """
+        获取特定URL允许的HTTP状态码列表
+
+        Args:
+            url: 网页URL
+
+        Returns:
+            List[int]: 允许的状态码列表
+        """
+        from urllib.parse import urlparse
+        domain = urlparse(url).netloc.lower()
+
+        for rule in cls.PERMISSIVE_STATUS_CODES.split(';'):
+            if ':' not in rule:
+                continue
+            rule_domain, status_codes_str = rule.split(':', 1)
+            if rule_domain in domain:
+                try:
+                    return [int(code.strip()) for code in status_codes_str.split(',')]
+                except ValueError:
+                    continue
+
+        return []  # 默认不允许非200状态码
+
+    @classmethod
+    def get_content_validation_rules(cls, url: str) -> dict:
+        """
+        获取特定URL的内容验证规则
+
+        Args:
+            url: 网页URL
+
+        Returns:
+            dict: 包含各种验证规则的字典
+        """
+        from urllib.parse import urlparse
+        domain = urlparse(url).netloc.lower()
+
+        # 默认规则
+        default_rules = {
+            'min_length': 200,
+            'min_chinese': 50,
+            'min_english': 100,
+            'skip_indicators': []
+        }
+
+        for rule in cls.PERMISSIVE_CONTENT_RULES.split(';'):
+            if rule.count(':') < 4:
+                continue
+
+            parts = rule.split(':')
+            if len(parts) != 5:
+                continue
+
+            rule_domain, min_length_str, min_chinese_str, min_english_str, indicators_str = parts
+
+            if rule_domain in domain:
+                try:
+                    return {
+                        'min_length': int(min_length_str),
+                        'min_chinese': int(min_chinese_str),
+                        'min_english': int(min_english_str),
+                        'skip_indicators': indicators_str.split(',') if indicators_str else []
+                    }
+                except ValueError:
+                    continue
+
+        return default_rules
 
     @classmethod
     def get_redis_url(cls) -> str:

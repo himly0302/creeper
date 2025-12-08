@@ -16,6 +16,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - 优化403状态码处理，对维基百科等网站更宽松
   - 调整内容质量检查逻辑，对知名内容网站使用更宽松标准
   - 相关文件：`src/fetcher.py`, `src/async_fetcher.py`
+
+### Changed
+- **配置系统**：新增可配置的特殊网站处理机制
+  - 用户可配置需要宽松处理的网站列表（PERMISSIVE_DOMAINS）
+  - 可配置特定网站允许的HTTP状态码（PERMISSIVE_STATUS_CODES）
+  - 可配置内容质量检查规则（PERMISSIVE_CONTENT_RULES）
+  - 默认支持维基百科、GitHub、Stack Overflow等知名网站
+  - 相关文件：`src/config.py`, `src/fetcher.py`, `src/async_fetcher.py`, `.env.example`
 - **CLI**：新增 --urls 参数支持直接输入URL列表
   - 接受逗号分隔的URL，输出JSON格式结构化数据到控制台
   - 每次强制重新查询（类似 --force 行为）

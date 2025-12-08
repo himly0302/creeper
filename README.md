@@ -186,6 +186,21 @@ python creeper.py inputs/input.md
 
 编辑 `.env` 文件自定义配置（从 `.env.example` 复制）：
 
+### 特殊网站处理配置
+```bash
+# 需要宽松处理的网站列表（域名匹配，逗号分隔）
+PERMISSIVE_DOMAINS=wikipedia.org,wikimedia.org,github.com,stackoverflow.com,docs.python.org
+
+# 特殊网站的HTTP状态码宽容配置
+PERMISSIVE_STATUS_CODES=wikipedia.org:403;wikimedia.org:403;github.com:403,404
+
+# 特殊网站的内容质量配置
+# 格式：域名:最小长度:中文最小字符:英文最小字符:错误指示词跳过
+PERMISSIVE_CONTENT_RULES=wikipedia.org:100:20:50:404;wikimedia.org:100:20:50:404;github.com:50:10:25:404;stackoverflow.com:100:15:30:
+```
+
+**说明**：对于知名内容网站（如维基百科、GitHub），系统会自动应用更宽松的内容验证和HTTP状态码处理。用户可以根据需要添加或修改配置。
+
 ### Redis 配置
 ```bash
 REDIS_HOST=localhost
