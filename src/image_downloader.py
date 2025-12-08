@@ -125,29 +125,65 @@ class AsyncImageDownloader:
                    parsed.hostname.startswith('172.'):
                     raise ValueError(f"不允许下载内网资源: {url}")
 
-                async with aiohttp.ClientSession(timeout=self.timeout) as session:
-                    # HEAD 请求检查文件信息
-                    async with session.head(url, allow_redirects=True) as head_response:
-                        # 检查 Content-Type
-                        content_type = head_response.headers.get('Content-Type', '').lower()
-                        if not content_type.startswith('image/'):
-                            logger.warning(f"⚠ URL 不是图片类型 ({content_type}): {url}")
-                            return ImageInfo(url, "", "", False, f"非图片类型: {content_type}")
+                # 添加 User-Agent 和其他头部避免被阻止
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
 
-                        # 检查文件大小
-                        content_length = head_response.headers.get('Content-Length')
-                        if content_length and int(content_length) > self.max_size_bytes:
-                            size_mb = int(content_length) / 1024 / 1024
-                            logger.warning(f"⚠ 图片超过大小限制 ({size_mb:.1f}MB > {self.max_size_mb}MB): {url}")
-                            return ImageInfo(url, "", "", False, f"文件过大: {size_mb:.1f}MB")
+                async with aiohttp.ClientSession(timeout=self.timeout, headers=headers) as session:
+                    content_type = ""
+                    content_length = None
+
+                    # 尝试 HEAD 请求检查文件信息
+                    try:
+                        async with session.head(url, allow_redirects=True) as head_response:
+                            content_type = head_response.headers.get('Content-Type', '').lower()
+                            content_length = head_response.headers.get('Content-Length')
+
+                            # 如果 HEAD 请求返回非图片类型或403，尝试 GET 请求验证
+                            if (not content_type.startswith('image/') or
+                                head_response.status == 403 or
+                                head_response.status == 404):
+
+                                logger.debug(f"HEAD 请求失败或返回非图片类型，尝试 GET 请求验证: {url}")
+                                async with session.get(url, allow_redirects=True) as get_response:
+                                    get_response.raise_for_status()
+                                    content_type = get_response.headers.get('Content-Type', '').lower()
+                                    content_length = get_response.headers.get('Content-Length')
+
+                                    # 如果仍然是非图片类型，放弃下载
+                                    if not content_type.startswith('image/'):
+                                        logger.warning(f"⚠ URL 不是图片类型 ({content_type}): {url}")
+                                        return ImageInfo(url, "", "", False, f"非图片类型: {content_type}")
+
+                                    # 检查文件大小
+                                    if content_length and int(content_length) > self.max_size_bytes:
+                                        size_mb = int(content_length) / 1024 / 1024
+                                        logger.warning(f"⚠ 图片超过大小限制 ({size_mb:.1f}MB > {self.max_size_mb}MB): {url}")
+                                        return ImageInfo(url, "", "", False, f"文件过大: {size_mb:.1f}MB")
+
+                    except Exception as head_error:
+                        logger.debug(f"HEAD 请求失败，直接使用 GET 请求: {head_error}")
+
+                    # 检查文件大小（如果有 HEAD 信息的话）
+                    if content_length and int(content_length) > self.max_size_bytes:
+                        size_mb = int(content_length) / 1024 / 1024
+                        logger.warning(f"⚠ 图片超过大小限制 ({size_mb:.1f}MB > {self.max_size_mb}MB): {url}")
+                        return ImageInfo(url, "", "", False, f"文件过大: {size_mb:.1f}MB")
 
                     # 下载图片
                     logger.debug(f"开始下载图片: {url}")
                     async with session.get(url) as response:
                         response.raise_for_status()
 
+                        # 最终验证响应的 Content-Type
+                        actual_content_type = response.headers.get('Content-Type', '').lower()
+                        if actual_content_type and not actual_content_type.startswith('image/'):
+                            logger.warning(f"⚠ 下载时发现 URL 不是图片类型 ({actual_content_type}): {url}")
+                            return ImageInfo(url, "", "", False, f"非图片类型: {actual_content_type}")
+
                         # 生成文件名
-                        filename = self._generate_filename(url, content_type)
+                        filename = self._generate_filename(url, content_type or actual_content_type)
 
                         # 确保保存目录存在
                         save_dir.mkdir(parents=True, exist_ok=True)

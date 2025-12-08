@@ -28,6 +28,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - 将 ImageDownloader 替换为 AsyncImageDownloader
   - 恢复 --with-images 参数在URL列表模式下的功能
   - 相关文件：`src/url_list_mode.py`
+- **维基百科图片下载**：修复维基百科图片因HEAD请求被阻止而下载失败的问题
+  - 添加User-Agent头部避免被反爬虫机制识别
+  - 实现HEAD请求失败时fallback到GET请求的机制
+  - 增强Content-Type验证逻辑，支持多层验证
+  - 相关文件：`src/image_downloader.py`
 - **历史数据清理**：清理遗留的反爬虫验证页面文件
   - 删除 `outputs/中国/中美关税/bloomberg.md` 错误文件
   - 文件包含反爬虫验证内容而非实际新闻内容
