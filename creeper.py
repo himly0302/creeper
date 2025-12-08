@@ -374,6 +374,11 @@ def main():
         import logging
         logging.getLogger("creeper").setLevel(logging.DEBUG)
 
+    # 验证 --with-images 参数组合
+    if args.with_images and not args.urls:
+        logger.error("错误: --with-images 参数必须配合 --urls 使用")
+        sys.exit(1)
+
     # 处理交互式登录
     if args.login_url:
         # 必须使用异步模式
@@ -392,6 +397,15 @@ def main():
             logger.error("URL列表模式不支持同步模式，请移除 --sync 参数")
             sys.exit(1)
 
+        # 检查 --with-images 参数组合
+        if args.with_images:
+            logger.info("已启用图片链接提取功能")
+        else:
+            # 验证参数组合：--with-images 必须配合 --urls
+            if hasattr(args, 'with_images') and args.with_images and not args.urls:
+                logger.error("--with-images 参数必须配合 --urls 使用")
+                sys.exit(1)
+
         # 导入URL列表模式模块
         from src.url_list_mode import run_url_list_mode
 
@@ -399,7 +413,8 @@ def main():
         asyncio.run(run_url_list_mode(
             url_string=args.urls,
             concurrency=args.concurrency,
-            use_playwright=not args.no_playwright
+            use_playwright=not args.no_playwright,
+            with_images=args.with_images
         ))
         return
 

@@ -66,11 +66,17 @@ python creeper.py --urls "URL1,URL2" -c 10
 # URL列表模式 + 调试
 python creeper.py --urls "URL1,URL2" --debug
 
+# URL列表模式 + 提取图片链接
+python creeper.py --urls "URL1,URL2" --with-images
+
 # 启用图片下载（注意：图片下载功能只适用于Markdown输出模式）
 DOWNLOAD_IMAGES=true python creeper.py inputs/input.md
 
 # URL列表模式（图片下载功能不适用，因为输出的是JSON）
 python creeper.py --urls "URL1,URL2"
+
+# URL列表模式 + 图片链接提取（获取页面中的图片URL列表）
+python creeper.py --urls "URL1,URL2" --with-images
 ```
 
 

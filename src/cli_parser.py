@@ -50,6 +50,13 @@ def create_argument_parser():
         help='直接输入URL列表，用逗号分隔。输出JSON格式数据到控制台'
     )
 
+    # 提取图片链接
+    parser.add_argument(
+        '--with-images',
+        action='store_true',
+        help='提取页面中的图片链接(仅在 --urls 模式下生效)'
+    )
+
     # 输出目录
     parser.add_argument(
         '-o', '--output',

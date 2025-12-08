@@ -20,21 +20,24 @@ logger = setup_logger(__name__)
 class URLListMode:
     """URL列表模式处理器"""
 
-    def __init__(self, concurrency: int = None, use_playwright: bool = True):
+    def __init__(self, concurrency: int = None, use_playwright: bool = True, with_images: bool = False):
         """
         初始化URL列表模式
 
         Args:
             concurrency: 并发数，默认使用配置中的值
             use_playwright: 是否启用Playwright动态渲染
+            with_images: 是否提取页面中的图片链接
         """
         self.concurrency = concurrency or config.CONCURRENCY
         self.use_playwright = use_playwright
+        self.with_images = with_images
         self.fetcher = AsyncWebFetcher(
             use_playwright=use_playwright,
             concurrency=self.concurrency
         )
-        logger.info(f"URL列表模式已初始化 (并发数: {self.concurrency})")
+        mode_desc = " (含图片提取)" if with_images else ""
+        logger.info(f"URL列表模式已初始化 (并发数: {self.concurrency}{mode_desc})")
 
     def validate_urls(self, urls: List[str]) -> List[str]:
         """
@@ -100,12 +103,23 @@ class URLListMode:
         Returns:
             符合输出格式的字典
         """
-        return {
+        result = {
             "title": webpage.title,
             "summary": webpage.description,
             "content": webpage.content,
             "url": webpage.url
         }
+
+        # 如果启用图片提取，添加 images 字段
+        if self.with_images and webpage.success:
+            # 复用 ImageDownloader 的图片提取逻辑
+            from .image_downloader import ImageDownloader
+            downloader = ImageDownloader(base_url=webpage.url)
+            image_urls = downloader.extract_image_urls(webpage.content)
+            # 提取完整URL列表（去掉alt_text和原始URL）
+            result["images"] = [img_url for _, _, img_url in image_urls]
+
+        return result
 
     async def process_urls(self, urls: List[str]) -> List[Dict[str, Any]]:
         """
@@ -194,7 +208,7 @@ class URLListMode:
             sys.exit(1)
 
 
-async def run_url_list_mode(url_string: str, concurrency: int = None, use_playwright: bool = True):
+async def run_url_list_mode(url_string: str, concurrency: int = None, use_playwright: bool = True, with_images: bool = False):
     """
     运行URL列表模式的便捷函数
 
@@ -202,6 +216,7 @@ async def run_url_list_mode(url_string: str, concurrency: int = None, use_playwr
         url_string: 逗号分隔的URL字符串
         concurrency: 并发数
         use_playwright: 是否启用Playwright
+        with_images: 是否提取页面中的图片链接
     """
-    mode = URLListMode(concurrency=concurrency, use_playwright=use_playwright)
+    mode = URLListMode(concurrency=concurrency, use_playwright=use_playwright, with_images=with_images)
     await mode.run(url_string)
