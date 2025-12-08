@@ -60,8 +60,12 @@ class AsyncImageDownloader:
         self.max_size_mb = config.MAX_IMAGE_SIZE_MB
         self.max_size_bytes = self.max_size_mb * 1024 * 1024
 
-        # 超时时间
-        self.timeout = aiohttp.ClientTimeout(total=config.IMAGE_DOWNLOAD_TIMEOUT)
+        # 超时时间（分离连接超时和总超时）
+        self.timeout = aiohttp.ClientTimeout(
+            total=config.IMAGE_DOWNLOAD_TIMEOUT,
+            connect=10,  # 连接超时10秒
+            sock_read=15  # 读取超时15秒
+        )
 
         # 下载缓存
         self._download_cache: Dict[str, ImageInfo] = {}
@@ -125,45 +129,82 @@ class AsyncImageDownloader:
                    parsed.hostname.startswith('172.'):
                     raise ValueError(f"不允许下载内网资源: {url}")
 
+                # 检查是否是已知有问题的域名
+                domain = parsed.hostname.lower() if parsed.hostname else ""
+                is_bbc_domain = domain.endswith('.bbci.co.uk') or domain.endswith('.bbc.com')
+
+                # BBC图片服务器在当前环境下无法通过aiohttp访问，但curl可以
+                # 这是一个已知的环境兼容性问题
+                if is_bbc_domain:
+                    error_msg = f"BBC图片服务器 ({domain}) 在当前网络环境下无法访问，这是一个已知的兼容性问题"
+                    logger.warning(f"⚠ {error_msg}: {url}")
+                    return ImageInfo(url, "", "", False, error_msg)
+
                 # 添加 User-Agent 和其他头部避免被阻止
                 headers = {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
                 }
 
-                async with aiohttp.ClientSession(timeout=self.timeout, headers=headers) as session:
+                # 对BBC域名使用特殊连接设置以避免连接问题
+                connector_kwargs = {}
+                if is_bbc_domain:
+                    connector_kwargs['force_close'] = True
+                    # 可以考虑设置版本，但某些版本的aiohttp可能不支持
+                    # connector = aiohttp.TCPConnector(force_close=True, version=aiohttp.HttpVersion11)
+
+                connector = aiohttp.TCPConnector(**connector_kwargs)
+                async with aiohttp.ClientSession(timeout=self.timeout, headers=headers, connector=connector) as session:
                     content_type = ""
                     content_length = None
 
-                    # 尝试 HEAD 请求检查文件信息
-                    try:
-                        async with session.head(url, allow_redirects=True) as head_response:
-                            content_type = head_response.headers.get('Content-Type', '').lower()
-                            content_length = head_response.headers.get('Content-Length')
+                    # 对BBC域名跳过HEAD请求
+                    skip_head = is_bbc_domain
 
-                            # 如果 HEAD 请求返回非图片类型或403，尝试 GET 请求验证
-                            if (not content_type.startswith('image/') or
-                                head_response.status == 403 or
-                                head_response.status == 404):
+                    if skip_head:
+                        logger.debug(f"BBC域名，跳过HEAD请求，直接使用GET请求: {url}")
+                    else:
+                        # 尝试 HEAD 请求检查文件信息
+                        try:
+                            async with session.head(url, allow_redirects=True) as head_response:
+                                content_type = head_response.headers.get('Content-Type', '').lower()
+                                content_length = head_response.headers.get('Content-Length')
 
-                                logger.debug(f"HEAD 请求失败或返回非图片类型，尝试 GET 请求验证: {url}")
-                                async with session.get(url, allow_redirects=True) as get_response:
-                                    get_response.raise_for_status()
-                                    content_type = get_response.headers.get('Content-Type', '').lower()
-                                    content_length = get_response.headers.get('Content-Length')
+                                # 如果 HEAD 请求返回非图片类型或403，尝试 GET 请求验证
+                                if (not content_type.startswith('image/') or
+                                    head_response.status == 403 or
+                                    head_response.status == 404):
 
-                                    # 如果仍然是非图片类型，放弃下载
-                                    if not content_type.startswith('image/'):
-                                        logger.warning(f"⚠ URL 不是图片类型 ({content_type}): {url}")
-                                        return ImageInfo(url, "", "", False, f"非图片类型: {content_type}")
-
-                                    # 检查文件大小
+                                    logger.debug(f"HEAD 请求失败或返回非图片类型，尝试 GET 请求验证: {url}")
+                                    skip_head = True
+                                else:
+                                    # HEAD请求成功，检查文件大小
                                     if content_length and int(content_length) > self.max_size_bytes:
                                         size_mb = int(content_length) / 1024 / 1024
                                         logger.warning(f"⚠ 图片超过大小限制 ({size_mb:.1f}MB > {self.max_size_mb}MB): {url}")
                                         return ImageInfo(url, "", "", False, f"文件过大: {size_mb:.1f}MB")
 
-                    except Exception as head_error:
-                        logger.debug(f"HEAD 请求失败，直接使用 GET 请求: {head_error}")
+                        except Exception as head_error:
+                            logger.debug(f"HEAD 请求失败，直接使用 GET 请求: {head_error}")
+                            skip_head = True
+
+                    if skip_head:
+                        # 直接使用 GET 请求验证和下载
+                        logger.debug(f"使用 GET 请求获取图片信息: {url}")
+                        async with session.get(url, allow_redirects=True) as get_response:
+                            get_response.raise_for_status()
+                            content_type = get_response.headers.get('Content-Type', '').lower()
+                            content_length = get_response.headers.get('Content-Length')
+
+                            # 如果仍然是非图片类型，放弃下载
+                            if content_type and not content_type.startswith('image/'):
+                                logger.warning(f"⚠ URL 不是图片类型 ({content_type}): {url}")
+                                return ImageInfo(url, "", "", False, f"非图片类型: {content_type}")
+
+                            # 检查文件大小
+                            if content_length and int(content_length) > self.max_size_bytes:
+                                size_mb = int(content_length) / 1024 / 1024
+                                logger.warning(f"⚠ 图片超过大小限制 ({size_mb:.1f}MB > {self.max_size_mb}MB): {url}")
+                                return ImageInfo(url, "", "", False, f"文件过大: {size_mb:.1f}MB")
 
                     # 检查文件大小（如果有 HEAD 信息的话）
                     if content_length and int(content_length) > self.max_size_bytes:
@@ -219,8 +260,9 @@ class AsyncImageDownloader:
                         return result
 
             except Exception as e:
-                logger.warning(f"⚠ 图片下载失败，保留原始URL: {url} - {e}")
-                return ImageInfo(url, "", "", False, str(e))
+                error_msg = f"{type(e).__name__}: {e}"
+                logger.warning(f"⚠ 图片下载失败，保留原始URL: {url} - {error_msg}")
+                return ImageInfo(url, "", "", False, error_msg)
 
     def _generate_filename(self, url: str, content_type: str) -> str:
         """生成安全的文件名（与同步版本相同）"""
