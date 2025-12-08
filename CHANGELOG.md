@@ -24,6 +24,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - 替代方案：所有操作默认使用异步并发模式
 
 ### Fixed
+- **重试机制并发优化**：修复重试等待期间阻塞并发槽的问题
+  - 将重试逻辑移至信号量（semaphore）外部执行
+  - 重试等待期间释放并发槽，允许其他任务继续执行
+  - 避免递归调用导致的信号量嵌套获取问题
+  - 提升并发爬取效率，日志输出更清晰有序
+  - 相关文件：`src/async_fetcher.py`
 - **图片下载器导入**：修复URL列表模式中的图片下载器导入错误
   - 将 ImageDownloader 替换为 AsyncImageDownloader
   - 恢复 --with-images 参数在URL列表模式下的功能

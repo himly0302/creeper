@@ -98,13 +98,43 @@ class AsyncWebFetcher:
         Returns:
             WebPage 对象
         """
+        # 重试逻辑在信号量外部，避免阻塞并发槽
+        while True:
+            result = await self._fetch_with_semaphore(url, retry_count)
+
+            # 如果成功，直接返回
+            if result.success:
+                return result
+
+            # 如果已达到最大重试次数，更新错误信息并返回
+            if retry_count >= config.MAX_RETRIES:
+                result.error = f"所有爬取方式均失败(已重试{config.MAX_RETRIES}次): {result.error}"
+                return result
+
+            # 需要重试：在信号量外等待，释放并发槽给其他任务
+            retry_delay = config.RETRY_BASE_DELAY * (2 ** retry_count)
+            logger.warning(f"爬取失败,{retry_delay}秒后重试 (第{retry_count+1}/{config.MAX_RETRIES}次)")
+            await asyncio.sleep(retry_delay)
+            retry_count += 1
+
+    async def _fetch_with_semaphore(self, url: str, retry_count: int = 0) -> WebPage:
+        """
+        在信号量保护下执行单次爬取尝试
+
+        Args:
+            url: 目标 URL
+            retry_count: 当前重试次数
+
+        Returns:
+            WebPage 对象
+        """
         async with self.semaphore:  # 控制并发数
             # 设置当前URL到context (用于日志追踪)
             current_url.set(url)
 
             logger.info(f"开始爬取: {url}")
 
-            # 随机延迟
+            # 随机延迟（仅首次）
             if retry_count == 0:
                 await self._random_delay()
 
@@ -160,21 +190,14 @@ class AsyncWebFetcher:
                 except Exception as e:
                     logger.error(f"动态渲染失败: {e}")
 
-            # 两种方式都失败,进行重试
-            if retry_count < config.MAX_RETRIES:
-                retry_delay = config.RETRY_BASE_DELAY * (2 ** retry_count)  # 指数退避
-                logger.warning(f"爬取失败,{retry_delay}秒后重试 (第{retry_count+1}/{config.MAX_RETRIES}次)")
-                await asyncio.sleep(retry_delay)
-                return await self.fetch(url, retry_count + 1)
-
-            # 所有重试都失败
+            # 本次尝试失败，返回失败的 WebPage（由外层决定是否重试）
             return WebPage(
                 url=url,
                 title="",
                 description="",
                 content="",
                 success=False,
-                error=f"所有爬取方式均失败(已重试{config.MAX_RETRIES}次)"
+                error=f"静态和动态爬取均失败"
             )
 
     async def _fetch_static(self, url: str) -> WebPage:
