@@ -4,6 +4,14 @@ All notable changes to Creeper will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Changed
+- **翻译功能**：翻译触发条件从"仅英文"调整为"所有非中文内容"
+  - 支持日文、韩文、法文、德文等多语言翻译成中文
+  - 仅保留中文内容不翻译
+  - 相关文件：`src/translator.py`
+
 ## [2.0.0] - 2025-12-08
 
 ### Changed

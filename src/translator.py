@@ -140,7 +140,12 @@ class Translator:
                 return text
 
         # 构建提示词
-        lang_names = {"en": "英文", "zh": "中文"}
+        lang_names = {
+            "en": "英文", "zh": "中文", "zh-cn": "简体中文", "zh-tw": "繁体中文",
+            "ja": "日文", "ko": "韩文", "fr": "法文", "de": "德文",
+            "es": "西班牙文", "it": "意大利文", "ru": "俄文", "pt": "葡萄牙文",
+            "ar": "阿拉伯文", "hi": "印地文", "th": "泰文", "vi": "越南文"
+        }
         source_name = lang_names.get(source_lang, source_lang)
         target_name = lang_names.get(target_lang, target_lang)
 
@@ -198,11 +203,11 @@ class Translator:
 
         content_lang = self.detect_language(page.content)
 
-        if content_lang != "en":
-            logger.info(f"内容非英文({content_lang}),跳过翻译")
+        if content_lang == "zh":
+            logger.info(f"内容已是中文({content_lang}),跳过翻译")
             return page
 
-        logger.info(f"检测到英文内容,开始翻译...")
+        logger.info(f"检测到非中文内容({content_lang}),开始翻译...")
 
         # 2. 收集需要翻译的字段
         translation_tasks = []
@@ -229,8 +234,8 @@ class Translator:
             if field_lang == "unknown":
                 logger.debug(f"[{field_name}] 无法检测语言,保留原文")
                 results[field_name] = text
-            elif field_lang != "en":
-                logger.debug(f"[{field_name}] 内容非英文({field_lang}),保留原文")
+            elif field_lang == "zh":
+                logger.debug(f"[{field_name}] 内容已是中文({field_lang}),保留原文")
                 results[field_name] = text
             else:
                 fields_to_translate.append((field_name, text))
@@ -248,8 +253,8 @@ class Translator:
 
                 logger.info(f"批量翻译 {len(fields_to_translate)} 个字段: {total_chars} 字符...")
 
-                # 调用翻译API(一次调用)
-                translated_combined = await self.translate(combined_text, skip_detection=True)
+                # 调用翻译API(一次调用)，传递检测到的源语言
+                translated_combined = await self.translate(combined_text, source_lang=content_lang, skip_detection=True)
 
                 # 分割翻译结果
                 translated_parts = translated_combined.split("---FIELD_SEPARATOR---")
@@ -270,7 +275,9 @@ class Translator:
                 # 降级:逐个翻译
                 for field_name, text in fields_to_translate:
                     try:
-                        results[field_name] = await self.translate(text, skip_detection=True)
+                        # 检测每个字段的语言
+                        field_lang = self.detect_language(text)
+                        results[field_name] = await self.translate(text, source_lang=field_lang, skip_detection=True)
                     except Exception as inner_e:
                         logger.error(f"翻译 {field_name} 失败: {inner_e}")
                         results[field_name] = text
@@ -296,7 +303,7 @@ class Translator:
 
         # 5. 标记已翻译
         page.translated = True
-        page.original_language = "en"
+        page.original_language = content_lang
 
         logger.info("网页翻译完成")
         return page
